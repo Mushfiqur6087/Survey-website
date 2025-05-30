@@ -1,10 +1,134 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { trajectoryAPI, TrajectoryData, AnnotationSubmission, TrajectoryAnnotation, KnotData } from '@/lib/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface KnotVisualizationProps {
+  knots: KnotAnnotation[];
+  knotPlacementOrder: Map<string, number>;
+  trajectoryData: TrajectoryData[];
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Canvas-based visualization of placed knots connected by lines
+ */
+function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 400, height = 300 }: KnotVisualizationProps) {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || knots.length === 0) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Sort knots by their position along the trajectory
+    const sortedKnots = [...knots].sort((knotA, knotB) => {
+      // Find the closest trajectory points for each knot
+      const findClosestTrajectoryIndex = (knot: KnotAnnotation) => {
+        let minDistance = Infinity;
+        let closestIndex = 0;
+        
+        trajectoryData.forEach((point, index) => {
+          const distance = Math.sqrt(
+            Math.pow(point.localX - knot.x, 2) + Math.pow(point.localY - knot.y, 2)
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestIndex = index;
+          }
+        });
+        
+        return closestIndex;
+      };
+      
+      const indexA = findClosestTrajectoryIndex(knotA);
+      const indexB = findClosestTrajectoryIndex(knotB);
+      
+      return indexA - indexB;
+    });
+
+    if (sortedKnots.length === 0) return;
+
+    // Calculate bounds for scaling - maintain same proportions as original chart
+    const xValues = sortedKnots.map(k => k.x);
+    const yValues = sortedKnots.map(k => k.y);
+    const minX = Math.min(...xValues);
+    const maxX = Math.max(...xValues);
+    const minY = Math.min(...yValues);
+    const maxY = Math.max(...yValues);
+
+    // Add padding
+    const padding = 40;
+    const drawWidth = width - 2 * padding;
+    const drawHeight = height - 2 * padding;
+
+    // Use separate scales for X and Y to maintain original chart proportions
+    const xRange = maxX - minX || 1;
+    const yRange = maxY - minY || 1;
+    
+    const scaleX = drawWidth / xRange;
+    const scaleY = drawHeight / yRange;
+
+    const scaledPoints = sortedKnots.map(knot => ({
+      x: padding + (knot.x - minX) * scaleX,
+      y: padding + (maxY - knot.y) * scaleY, // Flip Y axis to match chart orientation
+      originalKnot: knot
+    }));
+
+    // Draw connecting lines in trajectory order
+    if (scaledPoints.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(scaledPoints[0].x, scaledPoints[0].y);
+      for (let i = 1; i < scaledPoints.length; i++) {
+        ctx.lineTo(scaledPoints[i].x, scaledPoints[i].y);
+      }
+      ctx.strokeStyle = '#3B82F6';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.stroke();
+    }
+
+    // Draw knot points
+    scaledPoints.forEach((point, index) => {
+      const knot = point.originalKnot;
+      const isStartOrEnd = knot.id.startsWith('start-knot') || knot.id.startsWith('end-knot');
+      
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, isStartOrEnd ? 8 : 6, 0, 2 * Math.PI);
+      ctx.fillStyle = isStartOrEnd ? '#EF4444' : '#10B981';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.stroke();
+    });
+
+  }, [knots, knotPlacementOrder, trajectoryData, width, height]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={width}
+      height={height}
+      className="border border-gray-300 rounded-lg bg-white"
+      style={{ width: `${width}px`, height: `${height}px` }}
+    />
+  );
+}
 
 interface KnotAnnotation {
   x: number;
@@ -394,6 +518,7 @@ export default function PlaceKnots() {
                     <p>• For each curve, select the number of additional knots to place (3, 4, or 5)</p>
                     <p>• Start and end points are automatically placed as fixed knots</p>
                     <p>• Click on the curve to place your additional knots at points so that the placed points match the original trajectories</p>
+                    <p>• <span className="text-purple-600 font-medium">A visualization will show your knot drawing in real-time</span></p>
                     <p>• Use the "Remove Last Knot" button to undo placements</p>
                     <p>• You must complete all curves to proceed</p>
                   </div>
@@ -544,10 +669,39 @@ export default function PlaceKnots() {
                   )}
                 </div>
 
+                {/* Knot Drawing Visualization */}
+                {currentTrajectory && currentTrajectory.knots.length > 0 && (
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Your Knot Drawing
+                    </h3>
+                    <div className="flex flex-col items-center space-y-4">
+                      <KnotVisualization 
+                        knots={currentTrajectory.knots}
+                        knotPlacementOrder={knotPlacementOrder}
+                        trajectoryData={currentTrajectory.data}
+                        width={500}
+                        height={350}
+                      />
+                      <div className="text-sm text-gray-600 text-center">
+                        <p>
+                          <span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                          Start/End Points
+                          <span className="inline-block w-3 h-3 bg-green-500 rounded-full mr-2 ml-4"></span>
+                          Placed Knots
+                          <span className="inline-block w-4 h-0.5 bg-blue-500 mr-2 ml-4"></span>
+                          Connection Line
+                        </p>
+                        <p className="mt-2">This shows the sequence of knots you've placed, connected in order.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Knots list */}
                 {currentTrajectory?.knots.length > 0 && (
                   <div className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Placed Knots</h3>
+                    <h3 className="text-lg font-semibold text-blue-600 mb-4">Placed Knots</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {currentTrajectory.knots.map((knot, index) => {
                         const isStartKnot = knot.id.startsWith('start-knot');
@@ -563,18 +717,18 @@ export default function PlaceKnots() {
                           <div key={knot.id} className={`p-3 rounded-lg ${isStartOrEnd ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
                             <div className="flex justify-between items-center">
                               <div>
-                                <p className="font-semibold">
+                                <p className="font-semibold text-blue-600">
                                   {isStartKnot ? 'Start Point' : isEndKnot ? 'End Point' : `Additional Knot ${manualKnotIndex}`}
-                                  {isStartOrEnd && <span className="text-red-600 text-xs ml-1">(Fixed)</span>}
+                                  {isStartOrEnd && <span className="text-blue-500 text-xs ml-1">(Fixed)</span>}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-blue-500">
                                   X: {knot.x.toFixed(4)}, Y: {knot.y.toFixed(4)}
                                 </p>
                               </div>
                               {!isStartOrEnd && (
                                 <button
                                   onClick={() => removeKnot(knot.id)}
-                                  className="text-red-500 hover:text-red-700 text-sm"
+                                  className="text-blue-500 hover:text-blue-700 text-sm"
                                 >
                                   Remove
                                 </button>
