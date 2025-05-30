@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminAPI, KnotAnnotation } from '@/lib/api';
 import Link from 'next/link';
@@ -134,185 +134,199 @@ export default function TrackDetailPage() {
       );
     }
 
-    const sessionColor = getSessionColor(sessionIndex);
+    return (
+      <KnotVisualizationCanvas 
+        knots={validKnots}
+        sessionIndex={sessionIndex}
+        width={800}
+        height={384}
+      />
+    );
+  };
+
+  // Canvas-based knot visualization component (exact same approach as placeknots page)
+  const KnotVisualizationCanvas = ({ knots, sessionIndex, width = 800, height = 384 }: {
+    knots: ProcessedKnot[];
+    sessionIndex: number;
+    width?: number;
+    height?: number;
+  }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas || knots.length === 0) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height);
+
+      // Sort knots by their order first (for consistent processing)
+      const sortedKnots = [...knots].sort((a, b) => a.order - b.order);
+      
+      if (sortedKnots.length === 0) return;
+
+      // Sort knots by their spatial order along the trajectory (not placement order)
+      // This creates a path that follows the original trajectory more closely
+      const createTrajectoryOrderedPath = (knots: ProcessedKnot[]): ProcessedKnot[] => {
+        if (knots.length <= 1) return knots;
+        
+        const orderedPath: ProcessedKnot[] = [];
+        const remaining = [...knots];
+        
+        // Start with the knot that has the smallest x-coordinate (leftmost)
+        // This gives us a consistent starting point
+        let currentKnot = remaining.reduce((min, knot) => 
+          knot.x < min.x ? knot : min
+        );
+        
+        orderedPath.push(currentKnot);
+        remaining.splice(remaining.indexOf(currentKnot), 1);
+        
+        // Build path by always choosing the nearest remaining knot
+        while (remaining.length > 0) {
+          let nearestKnot = remaining[0];
+          let minDistance = Infinity;
+          
+          // Find the nearest unvisited knot
+          for (const knot of remaining) {
+            const dx = knot.x - currentKnot.x;
+            const dy = knot.y - currentKnot.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestKnot = knot;
+            }
+          }
+          
+          orderedPath.push(nearestKnot);
+          remaining.splice(remaining.indexOf(nearestKnot), 1);
+          currentKnot = nearestKnot;
+        }
+        
+        return orderedPath;
+      };
+
+      // Create trajectory-ordered path for drawing connections
+      const trajectoryOrderedKnots = createTrajectoryOrderedPath(sortedKnots);
+
+      // Calculate bounds for scaling - match main chart domain exactly
+      // Use knot positions and apply the same domain logic as perfected KnotVisualization
+      const xValues = sortedKnots.map((k: ProcessedKnot) => k.x);
+      const yValues = sortedKnots.map((k: ProcessedKnot) => k.y);
+      
+      // Match the main chart domain: 'dataMin - 0.5' to 'dataMax + 0.5'
+      const dataMinX = Math.min(...xValues);
+      const dataMaxX = Math.max(...xValues);
+      const dataMinY = Math.min(...yValues);
+      const dataMaxY = Math.max(...yValues);
+      
+      const minX = dataMinX - 0.5;
+      const maxX = dataMaxX + 0.5;
+      const minY = dataMinY - 0.5;
+      const maxY = dataMaxY + 0.5;
+
+      // Match Recharts margins exactly
+      const marginTop = 20;
+      const marginRight = 30; 
+      const marginBottom = 80;
+      const marginLeft = 80;
+      
+      // Calculate drawable area (same as Recharts does)
+      const drawWidth = width - marginLeft - marginRight;
+      const drawHeight = height - marginTop - marginBottom;
+
+      // Calculate ranges
+      const xRange = maxX - minX || 1;
+      const yRange = maxY - minY || 1;
+      
+      // Use independent scaling for X and Y axes like Recharts does
+      // Apply fine-tuning to match Recharts' exact coordinate calculations
+      const scaleX = (drawWidth / xRange) * 1.09; // Slightly more X-axis scaling
+      const scaleY = (drawHeight / yRange) * 0.91; // Slightly less Y-axis scaling
+
+      // Calculate scaled points for all knots (for drawing individual knots)
+      const scaledPoints = sortedKnots.map((knot: ProcessedKnot) => ({
+        x: marginLeft + (knot.x - minX) * scaleX,
+        y: marginTop + (maxY - knot.y) * scaleY, // Flip Y axis to match chart orientation
+        originalKnot: knot
+      }));
+
+      // Calculate scaled points for trajectory-ordered knots (for drawing connections)
+      const trajectoryScaledPoints = trajectoryOrderedKnots.map((knot: ProcessedKnot) => ({
+        x: marginLeft + (knot.x - minX) * scaleX,
+        y: marginTop + (maxY - knot.y) * scaleY, // Flip Y axis to match chart orientation
+        originalKnot: knot
+      }));
+
+      // Get session color
+      const sessionColor = getSessionColor(sessionIndex);
+
+      // Draw connecting lines following trajectory order (spatial proximity)
+      if (trajectoryScaledPoints.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(trajectoryScaledPoints[0].x, trajectoryScaledPoints[0].y);
+        for (let i = 1; i < trajectoryScaledPoints.length; i++) {
+          ctx.lineTo(trajectoryScaledPoints[i].x, trajectoryScaledPoints[i].y);
+        }
+        ctx.strokeStyle = sessionColor;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.stroke();
+      }
+
+      // Draw knot points (using original order for consistent appearance)
+      scaledPoints.forEach((point, index) => {
+        const knot = point.originalKnot;
+        
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+        ctx.fillStyle = sessionColor;
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.stroke();
+
+        // Draw order number on knot
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(knot.order.toString(), point.x, point.y);
+      });
+
+    }, [knots, sessionIndex, width, height]);
 
     return (
-      <div className="h-96 w-full relative">
-        <div className="absolute inset-0">
-          <svg 
-            width="100%" 
-            height="100%" 
-            className="border border-gray-200 rounded-lg bg-white"
-            viewBox="0 0 800 600"
-            preserveAspectRatio="xMidYMid meet"
-          >
-            {/* Define grid pattern */}
-            <defs>
-              <pattern id={`grid-${sessionIndex}`} width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e5e7eb" strokeWidth="1"/>
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#f3f4f6" strokeWidth="0.5" strokeDasharray="2,2"/>
-              </pattern>
-            </defs>
-            
-            {/* Calculate bounds and scaling */}
-            {(() => {
-              const xValues = validKnots.map(k => k.x);
-              const yValues = validKnots.map(k => k.y);
-              const minX = Math.min(...xValues);
-              const maxX = Math.max(...xValues);
-              const minY = Math.min(...yValues);
-              const maxY = Math.max(...yValues);
-              
-              // Add padding similar to placeknots page (dataMin - 0.5, dataMax + 0.5)
-              const xPadding = Math.max((maxX - minX) * 0.1, 0.5);
-              const yPadding = Math.max((maxY - minY) * 0.1, 0.5);
-              const viewMinX = minX - xPadding;
-              const viewMaxX = maxX + xPadding;
-              const viewMinY = minY - yPadding;
-              const viewMaxY = maxY + yPadding;
-              
-              const width = viewMaxX - viewMinX;
-              const height = viewMaxY - viewMinY;
-              
-              const svgWidth = 800;
-              const svgHeight = 600;
-              const margin = { top: 40, right: 40, bottom: 80, left: 80 }; // Similar to placeknots margins
-              
-              const chartWidth = svgWidth - margin.left - margin.right;
-              const chartHeight = svgHeight - margin.top - margin.bottom;
-              
-              const scaleX = chartWidth / width;
-              const scaleY = chartHeight / height;
-              
-              return (
-                <>
-                  {/* Grid background */}
-                  <rect 
-                    x={margin.left} 
-                    y={margin.top} 
-                    width={chartWidth} 
-                    height={chartHeight} 
-                    fill={`url(#grid-${sessionIndex})`} 
-                  />
-                  
-                  {/* Chart border */}
-                  <rect 
-                    x={margin.left} 
-                    y={margin.top} 
-                    width={chartWidth} 
-                    height={chartHeight} 
-                    fill="none" 
-                    stroke="#d1d5db" 
-                    strokeWidth="1"
-                  />
-                  
-                  {/* X-axis ticks and labels */}
-                  {(() => {
-                    const tickCount = 5;
-                    const ticks = [];
-                    for (let i = 0; i <= tickCount; i++) {
-                      const value = viewMinX + (width * i) / tickCount;
-                      const x = margin.left + (chartWidth * i) / tickCount;
-                      ticks.push(
-                        <g key={`x-tick-${i}`}>
-                          <line x1={x} y1={margin.top + chartHeight} x2={x} y2={margin.top + chartHeight + 5} stroke="#6b7280" strokeWidth="1"/>
-                          <text x={x} y={margin.top + chartHeight + 20} textAnchor="middle" className="text-xs fill-gray-600">
-                            {value.toFixed(2)}
-                          </text>
-                        </g>
-                      );
-                    }
-                    return ticks;
-                  })()}
-                  
-                  {/* Y-axis ticks and labels */}
-                  {(() => {
-                    const tickCount = 5;
-                    const ticks = [];
-                    for (let i = 0; i <= tickCount; i++) {
-                      const value = viewMinY + (height * i) / tickCount;
-                      const y = margin.top + chartHeight - (chartHeight * i) / tickCount; // Flip Y axis
-                      ticks.push(
-                        <g key={`y-tick-${i}`}>
-                          <line x1={margin.left - 5} y1={y} x2={margin.left} y2={y} stroke="#6b7280" strokeWidth="1"/>
-                          <text x={margin.left - 10} y={y + 4} textAnchor="end" className="text-xs fill-gray-600">
-                            {value.toFixed(2)}
-                          </text>
-                        </g>
-                      );
-                    }
-                    return ticks;
-                  })()}
-                  
-                  {/* Axis labels */}
-                  <text x={margin.left + chartWidth / 2} y={svgHeight - 20} textAnchor="middle" className="text-sm fill-gray-700 font-medium">
-                    Local X
-                  </text>
-                  <text x={20} y={margin.top + chartHeight / 2} textAnchor="middle" className="text-sm fill-gray-700 font-medium" transform={`rotate(-90 20 ${margin.top + chartHeight / 2})`}>
-                    Local Y
-                  </text>
-                  
-                  {/* Knots */}
-                  {validKnots.map((knot, index) => {
-                    const x = margin.left + ((knot.x - viewMinX) / width) * chartWidth;
-                    const y = margin.top + chartHeight - ((knot.y - viewMinY) / height) * chartHeight; // Flip Y axis
-                    
-                    return (
-                      <circle
-                        key={`knot-${index}`}
-                        cx={x}
-                        cy={y}
-                        r="10"
-                        fill={sessionColor}
-                        stroke="white"
-                        strokeWidth="3"
-                        className="cursor-pointer hover:opacity-80 transition-all duration-200"
-                        onMouseEnter={() => setHoveredKnot(knot)}
-                        onMouseLeave={() => setHoveredKnot(null)}
-                      />
-                    );
-                  })}
-                  
-                  {/* Knot order labels */}
-                  {validKnots.map((knot, index) => {
-                    const x = margin.left + ((knot.x - viewMinX) / width) * chartWidth;
-                    const y = margin.top + chartHeight - ((knot.y - viewMinY) / height) * chartHeight;
-                    
-                    return (
-                      <text
-                        key={`label-${index}`}
-                        x={x}
-                        y={y + 4}
-                        textAnchor="middle"
-                        className="text-sm font-bold fill-white pointer-events-none"
-                      >
-                        {knot.order}
-                      </text>
-                    );
-                  })}
-                  
-                  {/* Corner coordinate labels */}
-                  <text x={margin.left + 5} y={margin.top + 15} className="text-xs fill-gray-500">
-                    ({viewMinX.toFixed(2)}, {viewMaxY.toFixed(2)})
-                  </text>
-                  <text x={margin.left + chartWidth - 5} y={margin.top + chartHeight - 5} textAnchor="end" className="text-xs fill-gray-500">
-                    ({viewMaxX.toFixed(2)}, {viewMinY.toFixed(2)})
-                  </text>
-                </>
-              );
-            })()}
-          </svg>
+      <div className="flex flex-col items-center space-y-4">
+        <div className="w-full max-w-4xl">
+          <canvas
+            ref={canvasRef}
+            width={width}
+            height={height}
+            className="border border-gray-300 rounded-lg bg-white w-full"
+            style={{ maxWidth: '100%', height: 'auto', aspectRatio: `${width}/${height}` }}
+          />
         </div>
-        
-        {/* Hover tooltip */}
-        {hoveredKnot && (
-          <div className="absolute top-4 right-4 bg-black text-white p-3 rounded shadow-lg text-sm z-10">
-            <div>Order: {hoveredKnot.order}</div>
-            <div>X: {hoveredKnot.x.toFixed(4)}</div>
-            <div>Y: {hoveredKnot.y.toFixed(4)}</div>
-            <div>Session: {hoveredKnot.sessionId.slice(-8)}...</div>
-          </div>
-        )}
+        <div className="text-sm text-gray-600 text-center">
+          <p>
+            <span 
+              className="inline-block w-3 h-3 rounded-full mr-2" 
+              style={{ backgroundColor: getSessionColor(sessionIndex) }}
+            ></span>
+            Knots (Order: {knots.map((k: ProcessedKnot) => k.order).join(' → ')})
+            <span 
+              className="inline-block w-4 h-0.5 mr-2 ml-4" 
+              style={{ backgroundColor: getSessionColor(sessionIndex) }}
+            ></span>
+            Connection Line
+          </p>
+          <p className="mt-2">Knots connected by spatial proximity to follow original trajectory path.</p>
+        </div>
       </div>
     );
   };

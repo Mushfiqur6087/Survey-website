@@ -22,7 +22,7 @@ interface KnotVisualizationProps {
 /**
  * Canvas-based visualization of placed knots connected by lines
  */
-function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 400, height = 300 }: KnotVisualizationProps) {
+function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 800, height = 384 }: KnotVisualizationProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   React.useEffect(() => {
@@ -61,40 +61,104 @@ function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 
       return indexA - indexB;
     });
 
+    // Create trajectory-ordered path for connections (same as admin page)
+    const createTrajectoryOrderedPath = (knots: KnotAnnotation[]): KnotAnnotation[] => {
+      if (knots.length <= 1) return knots;
+      
+      const orderedPath: KnotAnnotation[] = [];
+      const remaining = [...knots];
+      
+      // Start with the knot that has the smallest x-coordinate (leftmost)
+      let currentKnot = remaining.reduce((min, knot) => 
+        knot.x < min.x ? knot : min
+      );
+      
+      orderedPath.push(currentKnot);
+      remaining.splice(remaining.indexOf(currentKnot), 1);
+      
+      // Build path by always choosing the nearest remaining knot
+      while (remaining.length > 0) {
+        let nearestKnot = remaining[0];
+        let minDistance = Infinity;
+        
+        for (const knot of remaining) {
+          const dx = knot.x - currentKnot.x;
+          const dy = knot.y - currentKnot.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestKnot = knot;
+          }
+        }
+        
+        orderedPath.push(nearestKnot);
+        remaining.splice(remaining.indexOf(nearestKnot), 1);
+        currentKnot = nearestKnot;
+      }
+      
+      return orderedPath;
+    };
+
+    // Create trajectory-ordered knots for drawing connections
+    const trajectoryOrderedKnots = createTrajectoryOrderedPath(sortedKnots);
+
     if (sortedKnots.length === 0) return;
 
-    // Calculate bounds for scaling - maintain same proportions as original chart
-    const xValues = sortedKnots.map(k => k.x);
-    const yValues = sortedKnots.map(k => k.y);
-    const minX = Math.min(...xValues);
-    const maxX = Math.max(...xValues);
-    const minY = Math.min(...yValues);
-    const maxY = Math.max(...yValues);
+    // Calculate bounds for scaling - match main chart domain exactly
+    // Use full trajectory data range instead of just knot positions to match the main chart
+    const trajectoryXValues = trajectoryData.map(point => point.localX);
+    const trajectoryYValues = trajectoryData.map(point => point.localY);
+    
+    // Match the main chart domain: 'dataMin - 0.5' to 'dataMax + 0.5'
+    const dataMinX = Math.min(...trajectoryXValues);
+    const dataMaxX = Math.max(...trajectoryXValues);
+    const dataMinY = Math.min(...trajectoryYValues);
+    const dataMaxY = Math.max(...trajectoryYValues);
+    
+    const minX = dataMinX - 0.5;
+    const maxX = dataMaxX + 0.5;
+    const minY = dataMinY - 0.5;
+    const maxY = dataMaxY + 0.5;
 
-    // Add padding
-    const padding = 40;
-    const drawWidth = width - 2 * padding;
-    const drawHeight = height - 2 * padding;
+    // Match Recharts margins exactly
+    const marginTop = 20;
+    const marginRight = 30; 
+    const marginBottom = 80;
+    const marginLeft = 80;
+    
+    // Calculate drawable area (same as Recharts does)
+    const drawWidth = width - marginLeft - marginRight;
+    const drawHeight = height - marginTop - marginBottom;
 
-    // Use separate scales for X and Y to maintain original chart proportions
+    // Calculate ranges
     const xRange = maxX - minX || 1;
     const yRange = maxY - minY || 1;
     
-    const scaleX = drawWidth / xRange;
-    const scaleY = drawHeight / yRange;
+    // Use independent scaling for X and Y axes like Recharts does
+    // Apply fine-tuning to match Recharts' exact coordinate calculations
+    const scaleX = (drawWidth / xRange) * 1.09; // Slightly more X-axis scaling
+    const scaleY = (drawHeight / yRange) * 0.91; // Slightly less Y-axis scaling
 
     const scaledPoints = sortedKnots.map(knot => ({
-      x: padding + (knot.x - minX) * scaleX,
-      y: padding + (maxY - knot.y) * scaleY, // Flip Y axis to match chart orientation
+      x: marginLeft + (knot.x - minX) * scaleX,
+      y: marginTop + (maxY - knot.y) * scaleY, // Flip Y axis to match chart orientation
       originalKnot: knot
     }));
 
-    // Draw connecting lines in trajectory order
-    if (scaledPoints.length > 1) {
+    // Calculate scaled points for trajectory-ordered knots (for drawing connections)
+    const trajectoryScaledPoints = trajectoryOrderedKnots.map(knot => ({
+      x: marginLeft + (knot.x - minX) * scaleX,
+      y: marginTop + (maxY - knot.y) * scaleY, // Flip Y axis to match chart orientation
+      originalKnot: knot
+    }));
+
+    // Draw connecting lines following trajectory order (spatial proximity)
+    if (trajectoryScaledPoints.length > 1) {
       ctx.beginPath();
-      ctx.moveTo(scaledPoints[0].x, scaledPoints[0].y);
-      for (let i = 1; i < scaledPoints.length; i++) {
-        ctx.lineTo(scaledPoints[i].x, scaledPoints[i].y);
+      ctx.moveTo(trajectoryScaledPoints[0].x, trajectoryScaledPoints[0].y);
+      for (let i = 1; i < trajectoryScaledPoints.length; i++) {
+        ctx.lineTo(trajectoryScaledPoints[i].x, trajectoryScaledPoints[i].y);
       }
       ctx.strokeStyle = '#3B82F6';
       ctx.lineWidth = 2;
@@ -124,8 +188,8 @@ function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 
       ref={canvasRef}
       width={width}
       height={height}
-      className="border border-gray-300 rounded-lg bg-white"
-      style={{ width: `${width}px`, height: `${height}px` }}
+      className="border border-gray-300 rounded-lg bg-white w-full"
+      style={{ maxWidth: '100%', height: 'auto', aspectRatio: `${width}/${height}` }}
     />
   );
 }
@@ -629,7 +693,6 @@ export default function PlaceKnots() {
                                 const data = payload[0].payload;
                                 return (
                                   <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
-                                    <p className="font-semibold">Scene ID: {data.sceneId}</p>
                                     <p className="text-blue-600">X: {Number(data.localX).toFixed(4)}</p>
                                     <p className="text-red-600">Y: {Number(data.localY).toFixed(4)}</p>
                                     <p className="text-green-600 text-sm">Click to place knot</p>
@@ -676,13 +739,15 @@ export default function PlaceKnots() {
                       Your Knot Drawing
                     </h3>
                     <div className="flex flex-col items-center space-y-4">
-                      <KnotVisualization 
-                        knots={currentTrajectory.knots}
-                        knotPlacementOrder={knotPlacementOrder}
-                        trajectoryData={currentTrajectory.data}
-                        width={500}
-                        height={350}
-                      />
+                      <div className="w-full max-w-4xl">
+                        <KnotVisualization 
+                          knots={currentTrajectory.knots}
+                          knotPlacementOrder={knotPlacementOrder}
+                          trajectoryData={currentTrajectory.data}
+                          width={800}
+                          height={384}
+                        />
+                      </div>
                       <div className="text-sm text-gray-600 text-center">
                         <p>
                           <span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>
@@ -692,7 +757,7 @@ export default function PlaceKnots() {
                           <span className="inline-block w-4 h-0.5 bg-blue-500 mr-2 ml-4"></span>
                           Connection Line
                         </p>
-                        <p className="mt-2">This shows the sequence of knots you've placed, connected in order.</p>
+                        <p className="mt-2">This shows the sequence of knots you've placed, connected by spatial proximity to follow the original trajectory path.</p>
                       </div>
                     </div>
                   </div>
