@@ -239,12 +239,16 @@ export default function Home() {
         {connectionStatus === 'connected' && (
           <div className="mt-8 text-center">
             <div className="flex justify-center space-x-4">
-              <button className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-full font-semibold transition-colors">
-                2nd Button
-              </button>
-              <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-colors">
-                3rd Button
-              </button>
+              <Link href="/admin">
+                <button className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-semibold transition-colors">
+                  Admin Login
+                </button>
+              </Link>
+              <Link href="/knot-comparison">
+                <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold transition-colors">
+                  Knot Comparison
+                </button>
+              </Link>
               <Link href="/placeknots">
                 <button className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition-colors">
                   Place Knots

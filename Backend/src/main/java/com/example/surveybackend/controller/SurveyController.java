@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.surveybackend.dto.AnnotationSubmissionRequest;
+import com.example.surveybackend.entity.KnotAnnotation;
 import com.example.surveybackend.entity.TrajectoryData;
+import com.example.surveybackend.service.KnotAnnotationService;
 import com.example.surveybackend.service.TrajectoryDataService;
 
 @RestController
@@ -21,6 +24,9 @@ public class SurveyController {
     
     @Autowired
     private TrajectoryDataService trajectoryDataService;
+    
+    @Autowired
+    private KnotAnnotationService knotAnnotationService;
     
     /**
      * Health check endpoint to verify if the backend is running.
@@ -93,6 +99,38 @@ public class SurveyController {
     @GetMapping("/trajectories/random/{count}")
     public List<Integer> getRandomTrackIds(@PathVariable Integer count) {
         return trajectoryDataService.getRandomTrackIds(count);
+    }
+    
+    /**
+     * Submit knot annotation data
+     * 
+     * @param submission The annotation submission containing all trajectory annotations
+     * @return List of saved knot annotations
+     */
+    @PostMapping("/annotations/submit")
+    public List<KnotAnnotation> submitAnnotations(@RequestBody AnnotationSubmissionRequest submission) {
+        return knotAnnotationService.saveAnnotationSubmission(submission);
+    }
+    
+    /**
+     * Get all knot annotations by session ID
+     * 
+     * @param sessionId The session ID to search for
+     * @return List of knot annotations for the specified session
+     */
+    @GetMapping("/annotations/session/{sessionId}")
+    public List<KnotAnnotation> getAnnotationsBySessionId(@PathVariable String sessionId) {
+        return knotAnnotationService.getAnnotationsBySessionId(sessionId);
+    }
+    
+    /**
+     * Get all knot annotations
+     * 
+     * @return List of all knot annotations
+     */
+    @GetMapping("/annotations")
+    public List<KnotAnnotation> getAllAnnotations() {
+        return knotAnnotationService.getAllAnnotations();
     }
     
 }

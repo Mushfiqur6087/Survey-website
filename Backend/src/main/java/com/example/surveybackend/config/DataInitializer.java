@@ -2,6 +2,7 @@ package com.example.surveybackend.config;
 
 import com.example.surveybackend.entity.TrajectoryData;
 import com.example.surveybackend.service.TrajectoryDataService;
+import com.example.surveybackend.service.AdminService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -24,9 +25,15 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private TrajectoryDataService trajectoryDataService;
     
+    @Autowired
+    private AdminService adminService;
+    
     @Override
     public void run(String... args) throws Exception {
         logger.info("Starting data initialization...");
+        
+        // Initialize default admin
+        initializeDefaultAdmin();
         
         // Check if data already exists
         List<TrajectoryData> existingData = trajectoryDataService.getAllTrajectoryData();
@@ -122,5 +129,25 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         return trajectoryDataList;
+    }
+    
+    /**
+     * Initialize default admin user if it doesn't exist
+     */
+    private void initializeDefaultAdmin() {
+        try {
+            String defaultUsername = "admin";
+            String defaultPassword = "admin";
+            
+            if (!adminService.existsByUsername(defaultUsername)) {
+                adminService.createAdmin(defaultUsername, defaultPassword);
+                logger.info("Default admin user created successfully with username: {} and password: {}", 
+                    defaultUsername, defaultPassword);
+            } else {
+                logger.info("Default admin user already exists");
+            }
+        } catch (Exception e) {
+            logger.error("Error creating default admin user: {}", e.getMessage(), e);
+        }
     }
 }
