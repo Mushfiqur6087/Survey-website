@@ -1,36 +1,146 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Survey Website Frontend
 
-## Getting Started
+A Next.js-based frontend for the Trajectory Data Analysis and Knot Annotation Survey System. This application provides an interactive interface for annotating trajectory data and an administrative panel for managing annotations.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Survey Interface
+- **Interactive Knot Placement**: Click-to-place knots on trajectory curves using Recharts LineChart
+- **Real-time Visualization**: Dynamic trajectory rendering with coordinate scaling and transformation
+- **Session Management**: Automatic session tracking for annotation workflows
+- **Responsive Design**: Modern UI with TailwindCSS styling
+
+### Admin Panel
+- **Secure Authentication**: Login system for administrative access
+- **Dashboard Overview**: Statistics and summaries of annotation sessions
+- **Track Management**: Browse and analyze individual trajectory tracks
+- **Advanced Visualizations**: Canvas-based rendering with trajectory-ordered path connections
+- **Annotation Review**: View and manage knot annotations by session and track ID
+
+## 🛠️ Technology Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: TailwindCSS
+- **Data Visualization**: Recharts, Canvas API
+- **HTTP Client**: Fetch API with custom utilities
+- **Build Tool**: Next.js built-in bundler
+
+## 📁 Project Structure
+
+```
+frontend/src/
+├── app/                    # Next.js App Router pages
+│   ├── admin/             # Admin panel routes
+│   │   ├── dashboard/     # Admin dashboard
+│   │   └── tracks/        # Track management
+│   │       └── [trackId]/ # Individual track details
+│   ├── placeknots/        # Interactive survey interface
+│   └── knot-comparison/   # Annotation comparison tools
+├── lib/
+│   └── api.ts            # API utilities and endpoints
+└── globals.css           # Global styles and TailwindCSS
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
+- Node.js 18+ and npm
+- Backend server running on http://localhost:8080
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Installation
+```bash
+# Install dependencies
+npm install
 
-## Learn More
+# Start development server
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# Build for production
+npm run build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Start production server
+npm start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Environment Setup
+The frontend automatically connects to the backend at `http://localhost:8080`. To change this, update the API base URL in `src/lib/api.ts`.
 
-## Deploy on Vercel
+## 🔗 API Integration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The frontend communicates with the Spring Boot backend through RESTful APIs:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Trajectory Data
+- Fetches trajectory data for visualization
+- Retrieves specific track information
+- Handles coordinate transformation for display
+
+### Knot Annotations
+- Submits user-placed knot annotations
+- Retrieves annotations by session and track ID
+- Manages annotation sessions
+
+### Admin Operations
+- Handles admin authentication
+- Fetches dashboard statistics
+- Manages track data for admin panel
+
+## 🎨 User Interface
+
+### Survey Interface (`/placeknots`)
+- Interactive trajectory curve visualization using Recharts
+- Click-to-place knot functionality with real-time feedback
+- Automatic coordinate transformation from display to scene coordinates
+- Session-based annotation workflow
+
+### Admin Panel (`/admin`)
+- Secure login interface
+- Dashboard with annotation statistics
+- Track browser with advanced filtering
+- Detailed track visualization with canvas-based rendering
+
+## 🧪 Development
+
+### Code Style
+- TypeScript for type safety
+- ESLint for code quality
+- Prettier for code formatting
+
+### Key Components
+- **TrajectoryChart**: Recharts-based interactive visualization
+- **CanvasRenderer**: Advanced trajectory visualization with path connections
+- **AdminDashboard**: Statistics and management interface
+- **TrackDetailView**: Individual track analysis and visualization
+
+## 🔧 Configuration
+
+### API Configuration
+Update `src/lib/api.ts` to modify backend connection settings:
+```typescript
+const API_BASE_URL = 'http://localhost:8080/api';
+```
+
+### Styling Configuration
+TailwindCSS configuration is in `tailwind.config.js` with custom design tokens for the survey interface.
+
+## 📱 Responsive Design
+
+The application is fully responsive and optimized for:
+- Desktop browsers (primary use case)
+- Tablet devices
+- Mobile devices (limited functionality for complex visualizations)
+
+## 🐛 Troubleshooting
+
+### Common Issues
+1. **API Connection Errors**: Ensure backend is running on port 8080
+2. **Chart Rendering Issues**: Check browser console for JavaScript errors
+3. **Authentication Problems**: Verify admin credentials with backend
+4. **Performance Issues**: Consider reducing trajectory data density for large datasets
+
+## 🔮 Future Enhancements
+
+- Real-time collaboration features
+- Enhanced data export capabilities
+- Advanced filtering and search functionality
+- Mobile-optimized survey interface

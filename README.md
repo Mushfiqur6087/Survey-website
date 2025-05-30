@@ -4,11 +4,24 @@ A full-stack web application for analyzing pedestrian trajectory data with knot-
 
 ## 🚀 Features
 
-- **Trajectory Data Visualization**: Interactive display of pedestrian movement patterns
-- **Knot Detection**: Advanced algorithms for identifying complex trajectory interactions
-- **Real-time API**: RESTful endpoints for trajectory data access and manipulation
-- **Modern UI**: Responsive design with TailwindCSS and React components
+### Core Survey System
+- **Interactive Knot Annotation**: Real-time trajectory curve visualization with click-to-place knot functionality
+- **Advanced Canvas Rendering**: Sophisticated trajectory visualization with path connections and coordinate scaling
+- **Session-Based Workflow**: Organized annotation sessions with automatic start/end point management
+- **Multi-Trajectory Support**: Handle complex trajectory datasets with unique track identification
+
+### Admin Panel
+- **Secure Authentication**: Admin login system with session management
+- **Comprehensive Dashboard**: Overview of annotation sessions and track statistics
+- **Track Management**: Browse, view, and analyze individual trajectory tracks
+- **Advanced Visualizations**: Canvas-based track detail views with trajectory-ordered path connections
+- **Annotation Review**: View and manage knot annotations by session and track
+
+### Technical Features
+- **Real-time API**: RESTful endpoints for trajectory data access and knot annotation storage
+- **Modern UI**: Responsive design with TailwindCSS, React components, and Recharts integration
 - **Data Processing**: Python scripts for cleaning and transforming trajectory datasets
+- **PostgreSQL Integration**: Persistent storage for trajectories, annotations, and admin data
 
 ## 🏗️ Architecture
 
@@ -156,8 +169,24 @@ The frontend automatically connects to the backend at `http://localhost:8080`. I
 4. **Start Frontend**: Run `npm run dev` in the `frontend/` directory
 5. **Access the application** at `http://localhost:3000`
 
+### Application Workflow
+
+#### For Survey Participants:
+1. **Navigate to Survey**: Visit `/placeknots` for the interactive knot annotation interface
+2. **View Trajectories**: Interactive trajectory curves are displayed using Recharts visualization
+3. **Place Knots**: Click on trajectory curves to place knot annotations
+4. **Session Management**: Annotations are automatically saved with session tracking
+
+#### For Administrators:
+1. **Admin Login**: Access `/admin` for secure authentication
+2. **Dashboard Overview**: View annotation statistics and session summaries
+3. **Track Management**: Browse individual tracks at `/admin/tracks`
+4. **Detailed Analysis**: View advanced visualizations for specific tracks at `/admin/tracks/[trackId]`
+5. **Review Annotations**: Examine knot placements and annotation data by session
+
 ## 📡 API Endpoints
 
+### Trajectory Data
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/health` | Health check |
@@ -166,6 +195,22 @@ The frontend automatically connects to the backend at `http://localhost:8080`. I
 | GET | `/api/trajectories/track/{id}` | Get trajectory for specific track |
 | POST | `/api/trajectories/tracks` | Get trajectories for multiple tracks |
 | GET | `/api/trajectories/random/{count}` | Get random track IDs |
+
+### Knot Annotations
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/knots/submit` | Submit knot annotation for a session |
+| GET | `/api/knots/session/{sessionId}` | Get all knots for a specific session |
+| GET | `/api/knots/session/{sessionId}/track/{trackId}` | Get knots for session and track |
+| GET | `/api/knots/sessions` | Get all annotation sessions |
+
+### Admin Panel
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/login` | Admin authentication |
+| GET | `/api/admin/dashboard/stats` | Get dashboard statistics |
+| GET | `/api/admin/tracks` | Get track management data |
+| GET | `/api/admin/tracks/{trackId}` | Get detailed track information |
 
 ## 🧪 Testing
 
@@ -183,11 +228,30 @@ npm test
 
 ## 📝 Development Notes
 
-- The application uses **CORS** enabled for cross-origin requests
-- **PostgreSQL** is configured for data persistence
-- **JPA/Hibernate** handles database operations with auto-DDL
-- **TailwindCSS** provides utility-first styling
-- **Recharts** library is used for data visualization
+### Frontend Architecture
+- **Next.js 15** with App Router for modern React development
+- **TailwindCSS** provides utility-first styling with custom design system
+- **Recharts** library for interactive trajectory visualization and knot placement
+- **Canvas API** integration for advanced trajectory rendering with path connections
+- **TypeScript** for type-safe development
+
+### Backend Architecture
+- **Spring Boot 3** with REST API architecture
+- **PostgreSQL** with JPA/Hibernate for data persistence
+- **CORS** enabled for cross-origin requests
+- **Entity Management**: TrajectoryData, KnotAnnotation, and Admin entities
+- **Auto-DDL** for database schema management
+
+### Key Components
+- **Interactive Survey Interface**: Real-time knot annotation with coordinate transformation
+- **Admin Dashboard**: Comprehensive management interface with advanced visualizations
+- **Canvas Rendering**: Custom trajectory visualization with trajectory-ordered path connections
+- **Session Management**: Organized annotation workflow with automatic data persistence
+
+### Database Schema
+- **trajectory_data**: Stores trajectory points with coordinates and metadata
+- **knot_annotations**: Stores user-placed knot annotations with session tracking
+- **admin**: Admin user authentication and session management
 
 ## 🔍 Troubleshooting
 
