@@ -2,9 +2,7 @@ import pandas as pd
 import json
 import os
 import sys
-from tabulate import tabulate
 from tti_dataset_tools.TrajectoryTransformer import TrajectoryTransformer
-from tti_dataset_tools.TrajectoryVisualizer import TrajectoryVisualizer
 from tti_dataset_tools.TrajectoryCleaner import TrajectoryCleaner
 from tti_dataset_tools.ColMapper import ColMapper
 
