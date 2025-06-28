@@ -10,7 +10,7 @@ def process_and_export_data():
     """Process trajectory data and export it as JSON for Java consumption"""
     
     # Configuration
-    dataDir = "/home/mushfiqur/vscode/knot-finding/location-2"
+    dataDir = "/root/location-2"
     sceneId = 210
     date = "2023-05-04"
     fps = 10
