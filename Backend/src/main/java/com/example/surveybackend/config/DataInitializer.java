@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,16 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private AdminService adminService;
     
+    // CHANGE 1: Add configurable paths
+    @Value("${app.dataset.json.path:/opt/survey-data/trajectory_data.json}")
+    private String datasetJsonPath;
+    
+    @Value("${app.dataset.script.path:/opt/survey-data/export_data.py}")
+    private String pythonScriptPath;
+    
+    @Value("${app.dataset.script.dir:/opt/survey-data}")
+    private String pythonScriptDir;
+    
     @Override
     public void run(String... args) throws Exception {
         logger.info("Starting data initialization...");
@@ -43,10 +54,18 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         try {
-            // Run Python script to process and export data
-            if (!runPythonDataExport()) {
-                logger.error("Failed to run Python data export script");
-                return;
+            // CHANGE 2: Check if JSON file exists first, skip Python script if it does
+            File jsonFile = new File(datasetJsonPath);
+            if (!jsonFile.exists()) {
+                logger.info("JSON file not found at {}, attempting to run Python script", datasetJsonPath);
+                
+                // Run Python script to process and export data
+                if (!runPythonDataExport()) {
+                    logger.error("Failed to run Python data export script and no existing JSON file found");
+                    return;
+                }
+            } else {
+                logger.info("Found existing JSON file at {}, skipping Python script execution", datasetJsonPath);
             }
             
             // Load the exported JSON data
@@ -71,11 +90,24 @@ public class DataInitializer implements CommandLineRunner {
     
     private boolean runPythonDataExport() {
         try {
-            String pythonScript = System.getProperty("user.dir") + "/../Dataset/export_data.py";
-            ProcessBuilder processBuilder = new ProcessBuilder("python3", pythonScript);
-            processBuilder.directory(new File(System.getProperty("user.dir") + "/../Dataset"));
+            // CHANGE 3: Use configurable paths instead of hardcoded relative paths
+            File scriptFile = new File(pythonScriptPath);
+            File workingDir = new File(pythonScriptDir);
             
-            logger.info("Running Python script: {}", pythonScript);
+            if (!scriptFile.exists()) {
+                logger.error("Python script not found at: {}", pythonScriptPath);
+                return false;
+            }
+            
+            if (!workingDir.exists()) {
+                logger.error("Python script directory not found at: {}", pythonScriptDir);
+                return false;
+            }
+            
+            ProcessBuilder processBuilder = new ProcessBuilder("python3", pythonScriptPath);
+            processBuilder.directory(workingDir);
+            
+            logger.info("Running Python script: {} from directory: {}", pythonScriptPath, pythonScriptDir);
             Process process = processBuilder.start();
             
             int exitCode = process.waitFor();
@@ -101,13 +133,21 @@ public class DataInitializer implements CommandLineRunner {
     }
     
     private List<TrajectoryData> loadTrajectoryDataFromJson() throws IOException {
-        String jsonFile = System.getProperty("user.dir") + "/../Dataset/trajectory_data.json";
+        // CHANGE 4: Use configurable path instead of hardcoded relative path
+        File jsonFile = new File(datasetJsonPath);
+        
+        if (!jsonFile.exists()) {
+            throw new IOException("JSON file not found at: " + datasetJsonPath);
+        }
+        
         ObjectMapper objectMapper = new ObjectMapper();
         List<TrajectoryData> trajectoryDataList = new ArrayList<>();
         
         try {
+            logger.info("Loading trajectory data from: {}", jsonFile.getAbsolutePath());
+            
             List<Map<String, Object>> jsonData = objectMapper.readValue(
-                new File(jsonFile), 
+                jsonFile, 
                 new TypeReference<List<Map<String, Object>>>() {}
             );
             
