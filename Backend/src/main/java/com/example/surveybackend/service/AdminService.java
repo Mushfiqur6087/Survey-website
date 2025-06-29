@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import com.example.surveybackend.entity.Admin;
@@ -24,12 +25,10 @@ public class AdminService {
      */
     public boolean authenticate(String username, String password) {
         Optional<Admin> adminOpt = adminRepository.findByUsername(username);
-        
         if (adminOpt.isPresent()) {
             Admin admin = adminOpt.get();
-            // Simple password comparison (no encryption for this basic implementation)
-            if (admin.getPassword().equals(password)) {
-                // Update last login time
+            // Compare hashed password
+            if (BCrypt.checkpw(password, admin.getPassword())) {
                 admin.setLastLogin(LocalDateTime.now());
                 adminRepository.save(admin);
                 return true;
@@ -46,7 +45,8 @@ public class AdminService {
      * @return The created admin
      */
     public Admin createAdmin(String username, String password) {
-        Admin admin = new Admin(username, password);
+        String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
+        Admin admin = new Admin(username, hashed);
         return adminRepository.save(admin);
     }
     

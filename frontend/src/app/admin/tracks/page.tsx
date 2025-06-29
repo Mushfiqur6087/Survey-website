@@ -20,15 +20,15 @@ export default function TracksPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if admin is logged in
-    const isLoggedIn = localStorage.getItem('adminLoggedIn');
+    // Check for admin token
+    const token = localStorage.getItem('adminToken');
     const username = localStorage.getItem('adminUsername');
-    
-    if (!isLoggedIn) {
+    if (!token) {
       router.push('/admin');
       return;
     }
-    
+    // Set token in API headers
+    adminAPI.setToken(token);
     setAdminUsername(username || '');
     fetchTracksData();
   }, [router]);

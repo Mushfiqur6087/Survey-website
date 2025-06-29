@@ -47,6 +47,7 @@ export interface AdminLoginResponse {
   success: boolean;
   message: string;
   username?: string;
+  token?: string;
 }
 
 const api = axios.create({
@@ -117,9 +118,22 @@ export const adminAPI = {
   // Admin login
   login: async (credentials: AdminLoginRequest): Promise<AdminLoginResponse> => {
     const response = await api.post('/admin/login', credentials);
+    if (response.data.token) {
+      localStorage.setItem('adminToken', response.data.token);
+      api.defaults.headers.common['X-Admin-Token'] = response.data.token;
+    }
     return response.data;
   },
-
+  // Set token for future requests
+  setToken: (token: string) => {
+    localStorage.setItem('adminToken', token);
+    api.defaults.headers.common['X-Admin-Token'] = token;
+  },
+  // Remove token
+  clearToken: () => {
+    localStorage.removeItem('adminToken');
+    delete api.defaults.headers.common['X-Admin-Token'];
+  },
   // Get all knot annotations for admin dashboard
   getAllKnotAnnotations: async (): Promise<KnotAnnotation[]> => {
     const response = await api.get('/annotations');

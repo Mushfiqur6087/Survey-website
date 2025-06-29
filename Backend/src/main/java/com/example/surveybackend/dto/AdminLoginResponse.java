@@ -4,24 +4,26 @@ public class AdminLoginResponse {
     private boolean success;
     private String message;
     private String username;
+    private String token;
     
     // Default constructor
     public AdminLoginResponse() {}
     
     // Constructor with parameters
-    public AdminLoginResponse(boolean success, String message, String username) {
+    public AdminLoginResponse(boolean success, String message, String username, String token) {
         this.success = success;
         this.message = message;
         this.username = username;
+        this.token = token;
     }
     
     // Static helper methods
-    public static AdminLoginResponse success(String username) {
-        return new AdminLoginResponse(true, "Login successful", username);
+    public static AdminLoginResponse success(String username, String token) {
+        return new AdminLoginResponse(true, "Login successful", username, token);
     }
     
     public static AdminLoginResponse failure(String message) {
-        return new AdminLoginResponse(false, message, null);
+        return new AdminLoginResponse(false, message, null, null);
     }
     
     // Getters and Setters
@@ -47,5 +49,13 @@ public class AdminLoginResponse {
     
     public void setUsername(String username) {
         this.username = username;
+    }
+    
+    public String getToken() {
+        return token;
+    }
+    
+    public void setToken(String token) {
+        this.token = token;
     }
 }

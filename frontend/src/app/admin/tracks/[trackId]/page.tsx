@@ -81,20 +81,18 @@ export default function TrackDetailPage() {
   }, [trackId]);
 
   useEffect(() => {
-    // Check if admin is logged in
-    const isLoggedIn = localStorage.getItem('adminLoggedIn');
+    // Check for admin token
+    const token = localStorage.getItem('adminToken');
     const username = localStorage.getItem('adminUsername');
-    
-    if (!isLoggedIn) {
+    if (!token) {
       router.push('/admin');
       return;
     }
-    
+    // Set token in API headers
+    adminAPI.setToken(token);
     setAdminUsername(username || '');
-    if (trackId) {
-      fetchTrackData();
-    }
-  }, [router, trackId, fetchTrackData]);
+    fetchTrackData();
+  }, [router, fetchTrackData]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminLoggedIn');
