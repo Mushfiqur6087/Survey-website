@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,12 @@ public class DataInitializer implements CommandLineRunner {
     
     @Autowired
     private AdminService adminService;
+    
+    @Value("${admin.default.username}")
+    private String defaultAdminUsername;
+    
+    @Value("${admin.default.password}")
+    private String defaultAdminPassword;
     
     @Override
     public void run(String... args) throws Exception {
@@ -136,13 +143,10 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void initializeDefaultAdmin() {
         try {
-            String defaultUsername = "admin";
-            String defaultPassword = "admin";
-            
-            if (!adminService.existsByUsername(defaultUsername)) {
-                adminService.createAdmin(defaultUsername, defaultPassword);
-                logger.info("Default admin user created successfully with username: {} and password: {}", 
-                    defaultUsername, defaultPassword);
+            if (!adminService.existsByUsername(defaultAdminUsername)) {
+                adminService.createAdmin(defaultAdminUsername, defaultAdminPassword);
+                logger.info("Default admin user created successfully with username: {}", 
+                    defaultAdminUsername);
             } else {
                 logger.info("Default admin user already exists");
             }

@@ -98,12 +98,6 @@ export default function AdminLogin() {
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Default credentials: admin / admin
-            </p>
-          </div>
-
-          <div className="text-center">
             <button
               type="button"
               onClick={() => router.push('/')}

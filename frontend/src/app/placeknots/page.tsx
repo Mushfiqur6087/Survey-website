@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { trajectoryAPI, TrajectoryData, AnnotationSubmission, TrajectoryAnnotation, KnotData } from '@/lib/api';
@@ -21,54 +21,83 @@ interface KnotVisualizationProps {
 
 /**
  * Canvas-based visualization of placed knots connected by lines
+ * Optimized for performance with memoization and efficient rendering
  */
 function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 800, height = 384 }: KnotVisualizationProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const animationFrameRef = React.useRef<number | null>(null);
 
-  React.useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || knots.length === 0) return;
+  // Memoize expensive calculations
+  const { scaledPoints, trajectoryScaledPoints, bounds } = useMemo(() => {
+    if (knots.length === 0) {
+      return { scaledPoints: [], trajectoryScaledPoints: [], bounds: null };
+    }
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    // Calculate bounds for scaling - match main chart domain exactly
+    const trajectoryXValues = trajectoryData.map(point => point.localX);
+    const trajectoryYValues = trajectoryData.map(point => point.localY);
+    
+    const dataMinX = Math.min(...trajectoryXValues);
+    const dataMaxX = Math.max(...trajectoryXValues);
+    const dataMinY = Math.min(...trajectoryYValues);
+    const dataMaxY = Math.max(...trajectoryYValues);
+    
+    const minX = dataMinX - 0.5;
+    const maxX = dataMaxX + 0.5;
+    const minY = dataMinY - 0.5;
+    const maxY = dataMaxY + 0.5;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, width, height);
+    const marginTop = 20;
+    const marginRight = 30; 
+    const marginBottom = 80;
+    const marginLeft = 80;
+    
+    const drawWidth = width - marginLeft - marginRight;
+    const drawHeight = height - marginTop - marginBottom;
 
-    // Sort knots by their position along the trajectory
+    const xRange = maxX - minX || 1;
+    const yRange = maxY - minY || 1;
+    
+    const scaleX = (drawWidth / xRange) * 1.09;
+    const scaleY = (drawHeight / yRange) * 0.91;
+
+    const bounds = { minX, maxX, minY, maxY, scaleX, scaleY, marginLeft, marginTop };
+
+    // Pre-calculate trajectory distances for efficient ordering
+    const trajectoryDistances = new Map<string, number>();
+    knots.forEach(knot => {
+      let minDistance = Infinity;
+      let closestIndex = 0;
+      
+      trajectoryData.forEach((point, index) => {
+        const distance = Math.sqrt(
+          Math.pow(point.localX - knot.x, 2) + Math.pow(point.localY - knot.y, 2)
+        );
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestIndex = index;
+        }
+      });
+      
+      trajectoryDistances.set(knot.id, closestIndex);
+    });
+
+    // Sort knots by their position along the trajectory (optimized)
     const sortedKnots = [...knots].sort((knotA, knotB) => {
-      // Find the closest trajectory points for each knot
-      const findClosestTrajectoryIndex = (knot: KnotAnnotation) => {
-        let minDistance = Infinity;
-        let closestIndex = 0;
-        
-        trajectoryData.forEach((point, index) => {
-          const distance = Math.sqrt(
-            Math.pow(point.localX - knot.x, 2) + Math.pow(point.localY - knot.y, 2)
-          );
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestIndex = index;
-          }
-        });
-        
-        return closestIndex;
-      };
-      
-      const indexA = findClosestTrajectoryIndex(knotA);
-      const indexB = findClosestTrajectoryIndex(knotB);
-      
+      const indexA = trajectoryDistances.get(knotA.id) || 0;
+      const indexB = trajectoryDistances.get(knotB.id) || 0;
       return indexA - indexB;
     });
 
-    // Create trajectory-ordered path for connections (same as admin page)
-    const createTrajectoryOrderedPath = (knots: KnotAnnotation[]): KnotAnnotation[] => {
+    // Optimized trajectory ordering using pre-calculated distances
+    const createOptimizedTrajectoryPath = (knots: KnotAnnotation[]): KnotAnnotation[] => {
       if (knots.length <= 1) return knots;
       
+      // Use spatial proximity with optimized distance calculation
       const orderedPath: KnotAnnotation[] = [];
       const remaining = [...knots];
       
-      // Start with the knot that has the smallest x-coordinate (leftmost)
+      // Start with leftmost knot
       let currentKnot = remaining.reduce((min, knot) => 
         knot.x < min.x ? knot : min
       );
@@ -76,18 +105,18 @@ function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 
       orderedPath.push(currentKnot);
       remaining.splice(remaining.indexOf(currentKnot), 1);
       
-      // Build path by always choosing the nearest remaining knot
+      // Build path efficiently
       while (remaining.length > 0) {
         let nearestKnot = remaining[0];
-        let minDistance = Infinity;
+        let minDistanceSquared = Infinity;
         
         for (const knot of remaining) {
           const dx = knot.x - currentKnot.x;
           const dy = knot.y - currentKnot.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+          const distanceSquared = dx * dx + dy * dy; // Skip sqrt for performance
           
-          if (distance < minDistance) {
-            minDistance = distance;
+          if (distanceSquared < minDistanceSquared) {
+            minDistanceSquared = distanceSquared;
             nearestKnot = knot;
           }
         }
@@ -100,60 +129,35 @@ function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 
       return orderedPath;
     };
 
-    // Create trajectory-ordered knots for drawing connections
-    const trajectoryOrderedKnots = createTrajectoryOrderedPath(sortedKnots);
-
-    if (sortedKnots.length === 0) return;
-
-    // Calculate bounds for scaling - match main chart domain exactly
-    // Use full trajectory data range instead of just knot positions to match the main chart
-    const trajectoryXValues = trajectoryData.map(point => point.localX);
-    const trajectoryYValues = trajectoryData.map(point => point.localY);
-    
-    // Match the main chart domain: 'dataMin - 0.5' to 'dataMax + 0.5'
-    const dataMinX = Math.min(...trajectoryXValues);
-    const dataMaxX = Math.max(...trajectoryXValues);
-    const dataMinY = Math.min(...trajectoryYValues);
-    const dataMaxY = Math.max(...trajectoryYValues);
-    
-    const minX = dataMinX - 0.5;
-    const maxX = dataMaxX + 0.5;
-    const minY = dataMinY - 0.5;
-    const maxY = dataMaxY + 0.5;
-
-    // Match Recharts margins exactly
-    const marginTop = 20;
-    const marginRight = 30; 
-    const marginBottom = 80;
-    const marginLeft = 80;
-    
-    // Calculate drawable area (same as Recharts does)
-    const drawWidth = width - marginLeft - marginRight;
-    const drawHeight = height - marginTop - marginBottom;
-
-    // Calculate ranges
-    const xRange = maxX - minX || 1;
-    const yRange = maxY - minY || 1;
-    
-    // Use independent scaling for X and Y axes like Recharts does
-    // Apply fine-tuning to match Recharts' exact coordinate calculations
-    const scaleX = (drawWidth / xRange) * 1.09; // Slightly more X-axis scaling
-    const scaleY = (drawHeight / yRange) * 0.91; // Slightly less Y-axis scaling
+    const trajectoryOrderedKnots = createOptimizedTrajectoryPath(sortedKnots);
 
     const scaledPoints = sortedKnots.map(knot => ({
       x: marginLeft + (knot.x - minX) * scaleX,
-      y: marginTop + (maxY - knot.y) * scaleY, // Flip Y axis to match chart orientation
+      y: marginTop + (maxY - knot.y) * scaleY,
       originalKnot: knot
     }));
 
-    // Calculate scaled points for trajectory-ordered knots (for drawing connections)
     const trajectoryScaledPoints = trajectoryOrderedKnots.map(knot => ({
       x: marginLeft + (knot.x - minX) * scaleX,
-      y: marginTop + (maxY - knot.y) * scaleY, // Flip Y axis to match chart orientation
+      y: marginTop + (maxY - knot.y) * scaleY,
       originalKnot: knot
     }));
 
-    // Draw connecting lines following trajectory order (spatial proximity)
+    return { scaledPoints, trajectoryScaledPoints, bounds };
+  }, [knots, trajectoryData, width, height]);
+
+  // Optimized canvas drawing with requestAnimationFrame
+  const drawCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || scaledPoints.length === 0) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear canvas efficiently
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw connecting lines
     if (trajectoryScaledPoints.length > 1) {
       ctx.beginPath();
       ctx.moveTo(trajectoryScaledPoints[0].x, trajectoryScaledPoints[0].y);
@@ -166,8 +170,8 @@ function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 
       ctx.stroke();
     }
 
-    // Draw knot points
-    scaledPoints.forEach((point, index) => {
+    // Draw knot points efficiently
+    scaledPoints.forEach((point) => {
       const knot = point.originalKnot;
       const isStartOrEnd = knot.id.startsWith('start-knot') || knot.id.startsWith('end-knot');
       
@@ -180,8 +184,22 @@ function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 
       ctx.setLineDash([]);
       ctx.stroke();
     });
+  }, [scaledPoints, trajectoryScaledPoints, width, height]);
 
-  }, [knots, knotPlacementOrder, trajectoryData, width, height]);
+  // Use requestAnimationFrame for smooth updates
+  React.useEffect(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    
+    animationFrameRef.current = requestAnimationFrame(drawCanvas);
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [drawCanvas]);
 
   return (
     <canvas
@@ -280,7 +298,7 @@ export default function PlaceKnots() {
     setCurrentTrajectoryIndex(0);
   };
 
-  const handleKnotCountChange = (count: number) => {
+  const handleKnotCountChange = useCallback((count: number) => {
     setTrajectories(prev => 
       prev.map((traj, index) => {
         if (index === currentTrajectoryIndex) {
@@ -290,13 +308,15 @@ export default function PlaceKnots() {
           const preservedKnots = [startKnot, endKnot].filter(knot => knot !== undefined) as KnotAnnotation[];
           
           // Reset knot placement order for this trajectory
-          const newOrderMap = new Map(knotPlacementOrder);
-          traj.knots.forEach(knot => {
-            if (!knot.id.startsWith('start-knot') && !knot.id.startsWith('end-knot')) {
-              newOrderMap.delete(knot.id);
-            }
+          setKnotPlacementOrder(prev => {
+            const newOrderMap = new Map(prev);
+            traj.knots.forEach(knot => {
+              if (!knot.id.startsWith('start-knot') && !knot.id.startsWith('end-knot')) {
+                newOrderMap.delete(knot.id);
+              }
+            });
+            return newOrderMap;
           });
-          setKnotPlacementOrder(newOrderMap);
           
           return { 
             ...traj, 
@@ -307,9 +327,9 @@ export default function PlaceKnots() {
         return traj;
       })
     );
-  };
+  }, [currentTrajectoryIndex]);
 
-  const handleChartClick = (event: any) => {
+  const handleChartClick = useCallback((event: any) => {
     if (!annotationMode) return;
     
     const currentTrajectory = trajectories[currentTrajectoryIndex];
@@ -337,9 +357,8 @@ export default function PlaceKnots() {
         order: nextRank
       };
 
-      // Update the knot placement order map
+      // Batch state updates to prevent multiple re-renders
       setKnotPlacementOrder(prev => new Map(prev).set(newKnot.id, nextRank));
-
       setTrajectories(prev => 
         prev.map((traj, index) => 
           index === currentTrajectoryIndex 
@@ -348,16 +367,16 @@ export default function PlaceKnots() {
         )
       );
     }
-  };
+  }, [annotationMode, trajectories, currentTrajectoryIndex, knotPlacementOrder]);
 
-  const removeKnot = (knotId: string) => {
+  const removeKnot = useCallback((knotId: string) => {
     // Prevent removing start and end knots
     if (knotId.startsWith('start-knot') || knotId.startsWith('end-knot')) {
       alert('Cannot remove start or end knots. They are automatically placed.');
       return;
     }
     
-    // Remove from order tracking
+    // Remove from order tracking and re-rank efficiently
     setKnotPlacementOrder(prev => {
       const newMap = new Map(prev);
       newMap.delete(knotId);
@@ -384,9 +403,9 @@ export default function PlaceKnots() {
           : traj
       )
     );
-  };
+  }, [currentTrajectoryIndex]);
 
-  const removeLastKnot = () => {
+  const removeLastKnot = useCallback(() => {
     setTrajectories(prev => 
       prev.map((traj, index) => {
         if (index === currentTrajectoryIndex) {
@@ -430,7 +449,7 @@ export default function PlaceKnots() {
         return traj;
       })
     );
-  };
+  }, [currentTrajectoryIndex]);
 
   const nextTrajectory = () => {
     if (currentTrajectoryIndex < trajectories.length - 1) {
@@ -531,15 +550,15 @@ export default function PlaceKnots() {
     };
   };
 
-  const isCurrentTrajectoryComplete = () => {
-    return currentTrajectory && currentTrajectory.knots.length === currentTrajectory.selectedKnotCount + 2;
-  };
-
-  const areAllTrajectoriesComplete = () => {
-    return trajectories.every(traj => traj.knots.length === traj.selectedKnotCount + 2);
-  };
-
   const currentTrajectory = trajectories[currentTrajectoryIndex];
+
+  const isCurrentTrajectoryComplete = useMemo(() => {
+    return currentTrajectory && currentTrajectory.knots.length === currentTrajectory.selectedKnotCount + 2;
+  }, [currentTrajectory]);
+
+  const areAllTrajectoriesComplete = useMemo(() => {
+    return trajectories.every(traj => traj.knots.length === traj.selectedKnotCount + 2);
+  }, [trajectories]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
@@ -585,6 +604,7 @@ export default function PlaceKnots() {
                     <p>• <span className="text-purple-600 font-medium">A visualization will show your knot drawing in real-time</span></p>
                     <p>• Use the "Remove Last Knot" button to undo placements</p>
                     <p>• You must complete all curves to proceed</p>
+                    <p>• <span className="text-red-600 font-semibold">In order to submit, you must use the password given to you</span></p>
                   </div>
                 <div className="mt-6">
                   <button
@@ -642,9 +662,9 @@ export default function PlaceKnots() {
                     </div>
                     <button
                       onClick={removeLastKnot}
-                      disabled={!currentTrajectory?.knots.length}
+                      disabled={!currentTrajectory?.knots.length || (currentTrajectory?.knots.length <= 2)}
                       className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                        currentTrajectory?.knots.length
+                        currentTrajectory?.knots.length && (currentTrajectory?.knots.length > 2)
                           ? 'bg-red-500 hover:bg-red-600 text-white'
                           : 'bg-gray-300 cursor-not-allowed text-gray-500'
                       }`}
@@ -662,7 +682,10 @@ export default function PlaceKnots() {
                 {/* Trajectory chart */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Click on the curve to place additional knots
+                    {isCurrentTrajectoryComplete 
+                      ? "Trajectory Complete - All knots placed!" 
+                      : "Click on the curve to place additional knots"
+                    }
                   </h3>
                   {currentTrajectory && (
                     <div className="h-96 w-full">
@@ -670,7 +693,10 @@ export default function PlaceKnots() {
                         <LineChart
                           data={currentTrajectory.data}
                           margin={{ top: 20, right: 30, bottom: 80, left: 80 }}
-                          onClick={handleChartClick}
+                          onClick={isCurrentTrajectoryComplete ? undefined : handleChartClick}
+                          style={{ 
+                            cursor: isCurrentTrajectoryComplete ? 'not-allowed' : 'pointer'
+                          }}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis 
@@ -695,7 +721,9 @@ export default function PlaceKnots() {
                                   <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
                                     <p className="text-blue-600">X: {Number(data.localX).toFixed(4)}</p>
                                     <p className="text-red-600">Y: {Number(data.localY).toFixed(4)}</p>
-                                    <p className="text-green-600 text-sm">Click to place knot</p>
+                                    <p className={`text-sm ${isCurrentTrajectoryComplete ? 'text-gray-500' : 'text-green-600'}`}>
+                                      {isCurrentTrajectoryComplete ? 'All knots placed' : 'Click to place knot'}
+                                    </p>
                                   </div>
                                 );
                               }
@@ -819,7 +847,7 @@ export default function PlaceKnots() {
                     
                     <div className="text-center">
                       <p className="text-sm text-gray-600">
-                        {isCurrentTrajectoryComplete() 
+                        {isCurrentTrajectoryComplete 
                           ? 'Trajectory complete! You can proceed.' 
                           : `Place ${(currentTrajectory?.selectedKnotCount + 2) - (currentTrajectory?.knots.length || 0)} more knot(s) to complete this trajectory.`
                         }
@@ -829,16 +857,16 @@ export default function PlaceKnots() {
                     {currentTrajectoryIndex === trajectories.length - 1 ? (
                       <button
                         onClick={finishAnnotation}
-                        disabled={!areAllTrajectoriesComplete() || loading}
+                        disabled={!areAllTrajectoriesComplete || loading}
                         className={`px-6 py-2 rounded transition-colors font-semibold ${
-                          areAllTrajectoriesComplete() && !loading
+                          areAllTrajectoriesComplete && !loading
                             ? 'bg-green-500 hover:bg-green-600 text-white'
                             : 'bg-gray-300 cursor-not-allowed text-gray-500'
                         }`}
                       >
                         {loading 
                           ? 'Submitting...' 
-                          : areAllTrajectoriesComplete() 
+                          : areAllTrajectoriesComplete 
                             ? 'Submit Annotations' 
                             : 'Complete All Trajectories'
                         }
@@ -846,14 +874,14 @@ export default function PlaceKnots() {
                     ) : (
                       <button
                         onClick={nextTrajectory}
-                        disabled={!isCurrentTrajectoryComplete() || currentTrajectoryIndex === trajectories.length - 1}
+                        disabled={!isCurrentTrajectoryComplete || currentTrajectoryIndex === trajectories.length - 1}
                         className={`px-4 py-2 rounded transition-colors ${
-                          isCurrentTrajectoryComplete()
+                          isCurrentTrajectoryComplete
                             ? 'bg-blue-500 hover:bg-blue-600 text-white'
                             : 'bg-gray-300 cursor-not-allowed text-gray-500'
                         }`}
                       >
-                        {isCurrentTrajectoryComplete() ? 'Next →' : 'Complete Current Trajectory'}
+                        {isCurrentTrajectoryComplete ? 'Next →' : 'Complete Current Trajectory'}
                       </button>
                     )}
                   </div>
