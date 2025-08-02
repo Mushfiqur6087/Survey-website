@@ -207,8 +207,6 @@ Dataset/*.csv
 Dataset/location-*/
 Dataset/data/
 
-# Generated files
-Dataset/trajectory_data.json
 
 # Temporary files
 *.tmp

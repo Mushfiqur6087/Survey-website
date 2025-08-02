@@ -50,10 +50,19 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         try {
-            // Run Python script to process and export data
-            if (!runPythonDataExport()) {
-                logger.error("Failed to run Python data export script");
-                return;
+            // Check if JSON file exists first
+            String jsonFile = System.getProperty("user.dir") + "/../Dataset/trajectory_data.json";
+            File jsonFileObj = new File(jsonFile);
+            
+            if (!jsonFileObj.exists()) {
+                logger.info("JSON file not found. Running Python script to generate data...");
+                // Run Python script to process and export data
+                if (!runPythonDataExport()) {
+                    logger.error("Failed to run Python data export script");
+                    return;
+                }
+            } else {
+                logger.info("JSON file found. Using existing data file: {}", jsonFile);
             }
             
             // Load the exported JSON data
