@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { trajectoryAPI, TrajectoryData, AnnotationSubmission, TrajectoryAnnotation, KnotData } from '@/lib/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceDot } from 'recharts';
+import SubmissionPasswordModal from '@/components/SubmissionPasswordModal';
 
 interface Point {
   x: number;
@@ -89,47 +90,37 @@ function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 
       return indexA - indexB;
     });
 
-    // Optimized trajectory ordering using pre-calculated distances
-    const createOptimizedTrajectoryPath = (knots: KnotAnnotation[]): KnotAnnotation[] => {
+    // NEW APPROACH: Follow trajectory path order, not spatial proximity
+    const createTrajectoryFollowingPath = (knots: KnotAnnotation[]): KnotAnnotation[] => {
       if (knots.length <= 1) return knots;
       
-      // Use spatial proximity with optimized distance calculation
-      const orderedPath: KnotAnnotation[] = [];
-      const remaining = [...knots];
-      
-      // Start with leftmost knot
-      let currentKnot = remaining.reduce((min, knot) => 
-        knot.x < min.x ? knot : min
-      );
-      
-      orderedPath.push(currentKnot);
-      remaining.splice(remaining.indexOf(currentKnot), 1);
-      
-      // Build path efficiently
-      while (remaining.length > 0) {
-        let nearestKnot = remaining[0];
-        let minDistanceSquared = Infinity;
+      // Find each knot's closest position index along the trajectory
+      const knotsWithTrajectoryIndex = knots.map(knot => {
+        let minDistance = Infinity;
+        let closestIndex = 0;
         
-        for (const knot of remaining) {
-          const dx = knot.x - currentKnot.x;
-          const dy = knot.y - currentKnot.y;
-          const distanceSquared = dx * dx + dy * dy; // Skip sqrt for performance
-          
-          if (distanceSquared < minDistanceSquared) {
-            minDistanceSquared = distanceSquared;
-            nearestKnot = knot;
+        trajectoryData.forEach((point, index) => {
+          const distance = Math.sqrt(
+            Math.pow(point.localX - knot.x, 2) + Math.pow(point.localY - knot.y, 2)
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestIndex = index;
           }
-        }
+        });
         
-        orderedPath.push(nearestKnot);
-        remaining.splice(remaining.indexOf(nearestKnot), 1);
-        currentKnot = nearestKnot;
-      }
+        return { knot, trajectoryIndex: closestIndex };
+      });
       
-      return orderedPath;
+      // Sort knots by their trajectory index (following the original path)
+      const trajectoryOrderedKnots = knotsWithTrajectoryIndex
+        .sort((a, b) => a.trajectoryIndex - b.trajectoryIndex)
+        .map(item => item.knot);
+      
+      return trajectoryOrderedKnots;
     };
 
-    const trajectoryOrderedKnots = createOptimizedTrajectoryPath(sortedKnots);
+    const trajectoryOrderedKnots = createTrajectoryFollowingPath(sortedKnots);
 
     const scaledPoints = sortedKnots.map(knot => ({
       x: marginLeft + (knot.x - minX) * scaleX,
@@ -157,32 +148,44 @@ function KnotVisualization({ knots, knotPlacementOrder, trajectoryData, width = 
     // Clear canvas efficiently
     ctx.clearRect(0, 0, width, height);
 
-    // Draw connecting lines
+    // Draw connecting lines following trajectory path order
     if (trajectoryScaledPoints.length > 1) {
       ctx.beginPath();
       ctx.moveTo(trajectoryScaledPoints[0].x, trajectoryScaledPoints[0].y);
       for (let i = 1; i < trajectoryScaledPoints.length; i++) {
         ctx.lineTo(trajectoryScaledPoints[i].x, trajectoryScaledPoints[i].y);
       }
-      ctx.strokeStyle = '#3B82F6';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#3B82F6'; // Blue connecting lines
+      ctx.lineWidth = 3;
       ctx.setLineDash([]);
       ctx.stroke();
     }
 
-    // Draw knot points efficiently
-    scaledPoints.forEach((point) => {
+    // Draw knot points with trajectory order indicators
+    scaledPoints.forEach((point, index) => {
       const knot = point.originalKnot;
       const isStartOrEnd = knot.id.startsWith('start-knot') || knot.id.startsWith('end-knot');
       
+      // Draw knot circle
       ctx.beginPath();
       ctx.arc(point.x, point.y, isStartOrEnd ? 8 : 6, 0, 2 * Math.PI);
-      ctx.fillStyle = isStartOrEnd ? '#EF4444' : '#10B981';
+      ctx.fillStyle = isStartOrEnd ? '#EF4444' : '#10B981'; // Red for start/end, Green for manual
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.setLineDash([]);
       ctx.stroke();
+      
+      // Add small number to show trajectory order (optional)
+      if (!isStartOrEnd && trajectoryScaledPoints.length > 2) {
+        const trajectoryIndex = trajectoryScaledPoints.findIndex(tp => tp.originalKnot.id === knot.id);
+        if (trajectoryIndex >= 0) {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '10px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText((trajectoryIndex + 1).toString(), point.x, point.y + 3);
+        }
+      }
     });
   }, [scaledPoints, trajectoryScaledPoints, width, height]);
 
@@ -235,6 +238,12 @@ export default function PlaceKnots() {
   const [annotationMode, setAnnotationMode] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
   const [knotPlacementOrder, setKnotPlacementOrder] = useState<Map<string, number>>(new Map());
+  
+  // Password modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingAnnotationData, setPendingAnnotationData] = useState<AnnotationSubmission | null>(null);
+  const [passwordError, setPasswordError] = useState<string>('');
+  const [isValidatingPassword, setIsValidatingPassword] = useState(false);
 
   useEffect(() => {
     // Generate a unique session ID when component mounts
@@ -247,10 +256,10 @@ export default function PlaceKnots() {
     setLoading(true);
     setError('');
     try {
-      // Get 5 random track IDs
+      // Get 10 random track IDs
       const allTrackIds = await trajectoryAPI.getUniqueTrackIds();
       const shuffled = allTrackIds.sort(() => 0.5 - Math.random());
-      const selectedTrackIds = shuffled.slice(0, 5);
+      const selectedTrackIds = shuffled.slice(0, 10);
 
       // Load trajectory data for each track
       const trajectoryPromises = selectedTrackIds.map(async (trackId) => {
@@ -474,16 +483,43 @@ export default function PlaceKnots() {
       return;
     }
     
+    // Collect and package knot placement data for all trajectories
+    const annotationData = collectKnotPlacementData();
+    
+    // Store the annotation data and show password modal
+    setPendingAnnotationData(annotationData);
+    setPasswordError('');
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordSubmit = async (password: string) => {
+    if (!pendingAnnotationData) return;
+    
     try {
+      setIsValidatingPassword(true);
+      setPasswordError('');
+      
+      // Validate password first
+      const passwordValidation = await trajectoryAPI.validateSubmissionPassword(password);
+      
+      if (!passwordValidation.valid) {
+        setPasswordError('Invalid password. Please try again.');
+        return;
+      }
+      
+      // Password is valid, submit annotations
       setLoading(true);
+      setShowPasswordModal(false);
       
-      // Collect and package knot placement data for all trajectories
-      const annotationData = collectKnotPlacementData();
+      // Add password to annotation data
+      const annotationDataWithPassword = {
+        ...pendingAnnotationData,
+        password: password
+      };
       
-      console.log('Submitting annotation data:', annotationData);
+      console.log('Submitting annotation data:', annotationDataWithPassword);
       
-      // Submit all annotation data as a single JSON payload to backend API
-      const result = await trajectoryAPI.submitAnnotations(annotationData);
+      const result = await trajectoryAPI.submitAnnotations(annotationDataWithPassword);
       
       console.log('Annotation submission successful:', result);
       
@@ -496,10 +532,22 @@ export default function PlaceKnots() {
       
     } catch (error) {
       console.error('Failed to submit annotations:', error);
-      alert('Failed to submit annotations. Please try again.');
+      if (error instanceof Error && error.message.includes('password')) {
+        setPasswordError('Invalid password. Please try again.');
+      } else {
+        setShowPasswordModal(false);
+        alert('Failed to submit annotations. Please try again.');
+      }
     } finally {
       setLoading(false);
+      setIsValidatingPassword(false);
     }
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false);
+    setPendingAnnotationData(null);
+    setPasswordError('');
   };
 
   /**
@@ -597,11 +645,11 @@ export default function PlaceKnots() {
             {!annotationMode ? (                <div className="bg-white rounded-lg shadow-md p-6">
                   <h2 className="text-xl font-semibold text-gray-800 mb-4">Instructions</h2>
                   <div className="space-y-3 text-gray-600">
-                    <p>• You will be shown 5 random trajectory curves</p>
+                    <p>• You will be shown 10 random trajectory curves</p>
                     <p>• For each curve, select the number of additional knots to place (3, 4, or 5)</p>
                     <p>• Start and end points are automatically placed as fixed knots</p>
                     <p>• Click on the curve to place your additional knots at points so that the placed points match the original trajectories</p>
-                    <p>• <span className="text-purple-600 font-medium">A visualization will show your knot drawing in real-time</span></p>
+                    <p>• <span className="text-purple-600 font-medium">A visualization will show your knots connected in trajectory order with straight line segments</span></p>
                     <p>• Use the "Remove Last Knot" button to undo placements</p>
                     <p>• You must complete all curves to proceed</p>
                     <p>• <span className="text-red-600 font-semibold">In order to submit, you must use the password given to you</span></p>
@@ -901,6 +949,15 @@ export default function PlaceKnots() {
           </div>
         )}
       </div>
+      
+      {/* Submission Password Modal */}
+      <SubmissionPasswordModal
+        isOpen={showPasswordModal}
+        onSubmit={handlePasswordSubmit}
+        onCancel={handlePasswordCancel}
+        isValidating={isValidatingPassword}
+        error={passwordError}
+      />
     </div>
   );
 }
