@@ -651,6 +651,7 @@ export default function PlaceKnots() {
                     <p>• Click on the curve to place your additional knots at points so that the placed points match the original trajectories</p>
                     <p>• <span className="text-purple-600 font-medium">A visualization will show your knots connected in trajectory order with straight line segments</span></p>
                     <p>• Use the "Remove Last Knot" button to undo placements</p>
+
                     <p>• You must complete all curves to proceed</p>
                     <p>• <span className="text-red-600 font-semibold">In order to submit, you must use the password given to you</span></p>
                   </div>
@@ -833,7 +834,7 @@ export default function PlaceKnots() {
                           <span className="inline-block w-4 h-0.5 bg-blue-500 mr-2 ml-4"></span>
                           Connection Line
                         </p>
-                        <p className="mt-2">This shows the sequence of knots you've placed, connected by spatial proximity to follow the original trajectory path.</p>
+                        <p className="mt-2">This shows the sequence of knots you&apos;ve placed, connected by spatial proximity to follow the original trajectory path.</p>
                       </div>
                     </div>
                   </div>

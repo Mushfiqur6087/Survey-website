@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminAPI, KnotAnnotation } from '@/lib/api';
 import Link from 'next/link';
@@ -28,23 +28,7 @@ export default function TrackDetailPage() {
   const router = useRouter();
   const trackId = parseInt(params.trackId as string);
 
-  useEffect(() => {
-    // Check if admin is logged in
-    const isLoggedIn = localStorage.getItem('adminLoggedIn');
-    const username = localStorage.getItem('adminUsername');
-    
-    if (!isLoggedIn) {
-      router.push('/admin');
-      return;
-    }
-    
-    setAdminUsername(username || '');
-    if (trackId) {
-      fetchTrackData();
-    }
-  }, [router, trackId]);
-
-  const fetchTrackData = async () => {
+  const fetchTrackData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -94,7 +78,23 @@ export default function TrackDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [trackId]);
+
+  useEffect(() => {
+    // Check if admin is logged in
+    const isLoggedIn = localStorage.getItem('adminLoggedIn');
+    const username = localStorage.getItem('adminUsername');
+    
+    if (!isLoggedIn) {
+      router.push('/admin');
+      return;
+    }
+    
+    setAdminUsername(username || '');
+    if (trackId) {
+      fetchTrackData();
+    }
+  }, [router, trackId, fetchTrackData]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminLoggedIn');
