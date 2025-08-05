@@ -29,6 +29,12 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private AdminService adminService;
     
+
+    @Value("${admin.default.username}")
+    private String defaultAdminUsername;
+    
+    @Value("${admin.default.password}")
+    private String defaultAdminPassword;
     // CHANGE 1: Add configurable paths
     @Value("${app.dataset.json.path:/opt/survey-data/trajectory_data.json}")
     private String datasetJsonPath;
@@ -176,13 +182,10 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void initializeDefaultAdmin() {
         try {
-            String defaultUsername = "admin";
-            String defaultPassword = "admin";
-            
-            if (!adminService.existsByUsername(defaultUsername)) {
-                adminService.createAdmin(defaultUsername, defaultPassword);
-                logger.info("Default admin user created successfully with username: {} and password: {}", 
-                    defaultUsername, defaultPassword);
+            if (!adminService.existsByUsername(defaultAdminUsername)) {
+                adminService.createAdmin(defaultAdminUsername, defaultAdminPassword);
+                logger.info("Default admin user created successfully with username: {}", 
+                    defaultAdminUsername);
             } else {
                 logger.info("Default admin user already exists");
             }

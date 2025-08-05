@@ -25,6 +25,7 @@ export interface TrajectoryAnnotation {
 export interface AnnotationSubmission {
   sessionId: string;
   trajectories: TrajectoryAnnotation[];
+  password?: string; // Optional password for submission
 }
 
 export interface KnotAnnotation {
@@ -47,6 +48,15 @@ export interface AdminLoginResponse {
   success: boolean;
   message: string;
   username?: string;
+}
+
+export interface SubmissionPasswordRequest {
+  password: string;
+}
+
+export interface SubmissionPasswordResponse {
+  valid: boolean;
+  message: string;
 }
 
 const api = axios.create({
@@ -88,7 +98,7 @@ export const trajectoryAPI = {
   },
 
   // Get random trajectories for annotation
-  getRandomTrajectories: async (count: number = 5): Promise<number[]> => {
+  getRandomTrajectories: async (count: number = 10): Promise<number[]> => {
     const response = await api.get(`/trajectories/random/${count}`);
     return response.data;
   },
@@ -96,6 +106,12 @@ export const trajectoryAPI = {
   // Submit knot annotation data
   submitAnnotations: async (submission: AnnotationSubmission): Promise<any> => {
     const response = await api.post('/annotations/submit', submission);
+    return response.data;
+  },
+
+  // Validate submission password
+  validateSubmissionPassword: async (password: string): Promise<SubmissionPasswordResponse> => {
+    const response = await api.post('/validate-submission-password', { password });
     return response.data;
   },
   
