@@ -50,22 +50,18 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         try {
-            // Check if JSON file exists first
+            // Check if JSON file exists
             String jsonFile = System.getProperty("user.dir") + "/../Dataset/trajectory_data.json";
             File jsonFileObj = new File(jsonFile);
             
             if (!jsonFileObj.exists()) {
-                logger.info("JSON file not found. Running Python script to generate data...");
-                // Run Python script to process and export data
-                if (!runPythonDataExport()) {
-                    logger.error("Failed to run Python data export script");
-                    return;
-                }
-            } else {
-                logger.info("JSON file found. Using existing data file: {}", jsonFile);
+                logger.error("JSON file not found at: {}. Please ensure the trajectory_data.json file exists in the Dataset directory.", jsonFile);
+                return;
             }
             
-            // Load the exported JSON data
+            logger.info("JSON file found. Loading data from: {}", jsonFile);
+            
+            // Load the JSON data
             List<TrajectoryData> trajectoryDataList = loadTrajectoryDataFromJson();
             
             if (trajectoryDataList.isEmpty()) {
@@ -82,37 +78,6 @@ public class DataInitializer implements CommandLineRunner {
             logger.error("IO error during data initialization: {}", e.getMessage(), e);
         } catch (RuntimeException e) {
             logger.error("Runtime error during data initialization: {}", e.getMessage(), e);
-        }
-    }
-    
-    private boolean runPythonDataExport() {
-        try {
-            String pythonScript = System.getProperty("user.dir") + "/../Dataset/export_data.py";
-            ProcessBuilder processBuilder = new ProcessBuilder("python3", pythonScript);
-            processBuilder.directory(new File(System.getProperty("user.dir") + "/../Dataset"));
-            
-            logger.info("Running Python script: {}", pythonScript);
-            Process process = processBuilder.start();
-            
-            int exitCode = process.waitFor();
-            if (exitCode == 0) {
-                logger.info("Python script executed successfully");
-                return true;
-            } else {
-                logger.error("Python script failed with exit code: {}", exitCode);
-                return false;
-            }
-            
-        } catch (IOException e) {
-            logger.error("IO error running Python script: {}", e.getMessage(), e);
-            return false;
-        } catch (InterruptedException e) {
-            logger.error("Python script execution was interrupted: {}", e.getMessage(), e);
-            Thread.currentThread().interrupt(); // Restore interrupted status
-            return false;
-        } catch (RuntimeException e) {
-            logger.error("Runtime error running Python script: {}", e.getMessage(), e);
-            return false;
         }
     }
     
