@@ -245,6 +245,387 @@ export default function PlaceKnots() {
   const [passwordError, setPasswordError] = useState<string>('');
   const [isValidatingPassword, setIsValidatingPassword] = useState(false);
 
+  // Tutorial modal state
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+
+  // Tutorial steps data
+  const tutorialSteps = [
+    {
+      title: "Welcome to the Trajectory Annotation Tool",
+      content: (
+        <div className="space-y-4">
+          <p className="text-lg text-gray-800">This tool helps researchers understand how humans perceive and simplify complex movement patterns.</p>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">What you'll be doing:</h4>
+            <p className="text-blue-700">You'll analyze 10 trajectory curves and place strategic points (called "knots") to capture their essential shape and characteristics.</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Understanding Knots and Splines",
+      content: (
+        <div className="space-y-4">
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-green-800 mb-2">🔗 What are Knots?</h4>
+            <p className="text-green-700">Knots are strategic points placed on a curve that capture its most important features - like sharp turns, peaks, valleys, or direction changes.</p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-purple-800 mb-2">📈 What are Splines?</h4>
+            <p className="text-purple-700">A spline is a smooth curve that connects multiple points. In our case, we use straight line segments to connect your knots, creating a simplified version of the original trajectory.</p>
+          </div>
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <h4 className="font-semibold text-orange-800 mb-2">🎯 The Goal</h4>
+            <p className="text-orange-700">Place knots so that when connected by straight lines, they create a simplified path that still captures the essential shape and movement pattern of the original trajectory.</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "How to Place Knots",
+      content: (
+        <div className="space-y-6">
+          <h4 className="font-semibold mb-3 text-gray-800">Step-by-step process:</h4>
+          
+          {/* Step 1: Knot Count Selection */}
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-start space-x-3 mb-3">
+              <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">1</span>
+              <div className="flex-1">
+                <h5 className="font-semibold text-blue-800 mb-2">Choose Knot Count</h5>
+                <p className="text-blue-700">Select 3, 4, or 5 additional knots to place (start and end points are automatic).</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <img 
+                src="/tutorial/knot-placement/1-knot-count-selection.png" 
+                alt="Knot count selection interface showing 3, 4, 5 additional knots buttons"
+                className="w-full max-w-2xl mx-auto rounded-lg border border-gray-300 shadow-sm"
+              />
+              <p className="text-sm text-blue-600 text-center mt-2">
+                Click on "3 Additional Knots", "4 Additional Knots", or "5 Additional Knots" buttons
+              </p>
+            </div>
+          </div>
+
+          {/* Step 2: Click on Curve */}
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-start space-x-3 mb-3">
+              <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">2</span>
+              <div className="flex-1">
+                <h5 className="font-semibold text-green-800 mb-2">Click on the Curve</h5>
+                <p className="text-green-700">Click directly on the red trajectory line where you want to place a knot. The interface will show you hover points and coordinates.</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <img 
+                src="/tutorial/knot-placement/2-click-on-curve.png" 
+                alt="Trajectory chart showing how to click on the red curve to place knots"
+                className="w-full max-w-2xl mx-auto rounded-lg border border-gray-300 shadow-sm"
+              />
+              <p className="text-sm text-green-600 text-center mt-2">
+                Hover over the red curve and click at strategic points. Blue dots show interactive hover points.
+              </p>
+            </div>
+          </div>
+
+          {/* Step 3: Strategic Placement */}
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <span className="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">3</span>
+              <div className="flex-1">
+                <h5 className="font-semibold text-purple-800 mb-2">Strategic Placement Tips</h5>
+                <ul className="text-purple-700 space-y-1">
+                  <li>• Focus on <strong>sharp turns</strong> and direction changes</li>
+                  <li>• Place knots at <strong>peaks and valleys</strong></li>
+                  <li>• Choose points that capture the <strong>essential shape</strong></li>
+                  <li>• Avoid placing knots too close together</li>
+                  <li>• Think: "What points would recreate this path?"</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4: Check Visualization */}
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <div className="flex items-start space-x-3 mb-3">
+              <span className="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">4</span>
+              <div className="flex-1">
+                <h5 className="font-semibold text-orange-800 mb-2">Check Your Knot Drawing</h5>
+                <p className="text-orange-700">See how your knots connect in the visualization section. This shows your simplified trajectory.</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <img 
+                src="/tutorial/knot-placement/3-knot-drawing.png" 
+                alt="Your Knot Drawing visualization showing connected knots with blue lines"
+                className="w-full max-w-2xl mx-auto rounded-lg border border-gray-300 shadow-sm"
+              />
+              <p className="text-sm text-orange-600 text-center mt-2">
+                Blue lines connect your knots in trajectory order. This is your simplified version of the curve.
+              </p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Color Coding and Visual Elements",
+      content: (
+        <div className="space-y-4">
+          <h4 className="font-semibold mb-3 text-gray-800">Understanding the interface:</h4>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+              <p className="text-gray-800"><strong>Red curve:</strong> Original trajectory path with all data points</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+              <p className="text-gray-800"><strong>Red dots:</strong> Automatic start and end knots (fixed, cannot be removed)</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+              <p className="text-gray-800"><strong>Green dots:</strong> Your manually placed knots</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-1 bg-blue-500"></div>
+              <p className="text-gray-800"><strong>Blue lines:</strong> Connections between knots in trajectory order</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+              <p className="text-gray-800"><strong>Blue highlight:</strong> Interactive hover points on the curve</p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Available Tools and Controls",
+      content: (
+        <div className="space-y-6">
+          <h4 className="font-semibold mb-3 text-gray-800">Control buttons and features:</h4>
+          
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h5 className="font-semibold text-gray-800 mb-2">🔢 Knot Count Buttons (3, 4, 5)</h5>
+              <p className="text-gray-700">Change how many additional knots you want to place. When you reduce the count, excess knots are removed from the end automatically.</p>
+            </div>
+            
+            <div className="bg-red-50 p-4 rounded-lg">
+              <h5 className="font-semibold text-red-800 mb-2">🗑️ Remove Last Knot</h5>
+              <p className="text-red-700">Undo your most recent knot placement. This removes the last manually placed knot (not start/end points).</p>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h5 className="font-semibold text-blue-800 mb-2">❌ Individual Remove</h5>
+              <p className="text-blue-700">Click "Remove" next to any knot in the knots list to delete it specifically. This gives you precise control over which knots to remove.</p>
+            </div>
+          </div>
+
+          {/* Placed Knots Section */}
+          <div className="bg-indigo-50 p-4 rounded-lg">
+            <h5 className="font-semibold text-indigo-800 mb-3">📋 Placed Knots Management</h5>
+            <p className="text-indigo-700 mb-4">View and manage all your placed knots with detailed coordinates and easy removal options.</p>
+            <div className="mt-4">
+              <img 
+                src="/tutorial/knot-placement/4-placed-knots-list.png" 
+                alt="Placed knots list showing knot details and remove buttons"
+                className="w-full max-w-2xl mx-auto rounded-lg border border-gray-300 shadow-sm"
+              />
+              <p className="text-sm text-indigo-600 text-center mt-2">
+                Each knot shows its coordinates and type. Red sections are fixed start/end points, gray sections are your additional knots.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h5 className="font-semibold text-green-800 mb-2">📊 Progress Tracking</h5>
+              <p className="text-green-700">Colored dots show your completion status across all 10 trajectories:</p>
+              <ul className="mt-2 space-y-1 text-green-600">
+                <li>• <span className="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"></span>Current trajectory</li>
+                <li>• <span className="inline-block w-3 h-3 bg-green-500 rounded-full mr-2"></span>Completed trajectories</li>
+                <li>• <span className="inline-block w-3 h-3 bg-gray-300 rounded-full mr-2"></span>Pending trajectories</li>
+              </ul>
+            </div>
+            
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h5 className="font-semibold text-purple-800 mb-2">⬅️➡️ Navigation</h5>
+              <p className="text-purple-700">Move between trajectories using Previous/Next buttons. You can only proceed after completing the current trajectory with the required number of knots.</p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Complete Workflow Overview",
+      content: (
+        <div className="space-y-6">
+          <h4 className="font-semibold mb-3 text-gray-800">Visual Guide to the Complete Process:</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Workflow Step 1 */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
+              <div className="flex items-center mb-3">
+                <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">1</span>
+                <h5 className="font-semibold text-blue-800">Select Knot Count</h5>
+              </div>
+              <img 
+                src="/tutorial/knot-placement/1-knot-count-selection.png" 
+                alt="Step 1: Knot count selection"
+                className="w-full rounded-lg border border-blue-200 shadow-sm mb-2"
+              />
+              <p className="text-sm text-blue-700">Choose 3, 4, or 5 additional knots</p>
+            </div>
+
+            {/* Workflow Step 2 */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
+              <div className="flex items-center mb-3">
+                <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">2</span>
+                <h5 className="font-semibold text-green-800">Place Knots</h5>
+              </div>
+              <img 
+                src="/tutorial/knot-placement/2-click-on-curve.png" 
+                alt="Step 2: Click on curve to place knots"
+                className="w-full rounded-lg border border-green-200 shadow-sm mb-2"
+              />
+              <p className="text-sm text-green-700">Click on the red curve at strategic points</p>
+            </div>
+
+            {/* Workflow Step 3 */}
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
+              <div className="flex items-center mb-3">
+                <span className="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">3</span>
+                <h5 className="font-semibold text-orange-800">View Visualization</h5>
+              </div>
+              <img 
+                src="/tutorial/knot-placement/3-knot-drawing.png" 
+                alt="Step 3: Knot drawing visualization"
+                className="w-full rounded-lg border border-orange-200 shadow-sm mb-2"
+              />
+              <p className="text-sm text-orange-700">Check how your knots connect</p>
+            </div>
+
+            {/* Workflow Step 4 */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+              <div className="flex items-center mb-3">
+                <span className="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">4</span>
+                <h5 className="font-semibold text-purple-800">Manage Knots</h5>
+              </div>
+              <img 
+                src="/tutorial/knot-placement/4-placed-knots-list.png" 
+                alt="Step 4: Placed knots management"
+                className="w-full rounded-lg border border-purple-200 shadow-sm mb-2"
+              />
+              <p className="text-sm text-purple-700">Review and remove knots if needed</p>
+            </div>
+          </div>
+
+          {/* Key Points */}
+          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+            <h5 className="font-semibold text-yellow-800 mb-3">🔑 Key Points to Remember:</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <ul className="space-y-2 text-yellow-700">
+                <li>• Start and end points are <strong>automatically placed</strong></li>
+                <li>• You only place the <strong>additional knots</strong> (3, 4, or 5)</li>
+                <li>• Focus on <strong>significant curve features</strong></li>
+                <li>• Use the visualization to <strong>check your work</strong></li>
+              </ul>
+              <ul className="space-y-2 text-yellow-700">
+                <li>• You can <strong>change knot count</strong> without losing work</li>
+                <li>• <strong>Remove knots</strong> individually or the last one</li>
+                <li>• Complete all <strong>10 trajectories</strong> to submit</li>
+                <li>• Need the <strong>submission password</strong> to finish</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Completion and Submission",
+      content: (
+        <div className="space-y-4">
+          <h4 className="font-semibold mb-3 text-gray-800">Final steps:</h4>
+          <div className="space-y-3">
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h5 className="font-semibold text-yellow-800 mb-2">📋 Complete all trajectories:</h5>
+              <p className="text-yellow-700">You must place the required number of knots on all 10 trajectories before you can submit.</p>
+            </div>
+            <div className="bg-red-50 p-4 rounded-lg">
+              <h5 className="font-semibold text-red-800 mb-2">🔐 Password required:</h5>
+              <p className="text-red-700">You'll need the submission password provided to you to complete the annotation process.</p>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h5 className="font-semibold text-green-800 mb-2">✅ Automatic submission:</h5>
+              <p className="text-green-700">Once you enter the correct password, your annotations will be automatically saved and you'll be redirected to the home page.</p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Tips for Success",
+      content: (
+        <div className="space-y-4">
+          <h4 className="font-semibold mb-3 text-gray-800">Best practices:</h4>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <span className="text-green-500 text-xl">💡</span>
+              <p className="text-gray-800"><strong>Focus on key features:</strong> Place knots at the most distinctive parts of the trajectory - sharp turns, peaks, valleys</p>
+            </div>
+            <div className="flex items-start space-x-3">
+              <span className="text-blue-500 text-xl">🎯</span>
+              <p className="text-gray-800"><strong>Think about shape:</strong> Ask yourself "What points would I need to roughly recreate this path?"</p>
+            </div>
+            <div className="flex items-start space-x-3">
+              <span className="text-purple-500 text-xl">👀</span>
+              <p className="text-gray-800"><strong>Use the visualization:</strong> Check the "Your Knot Drawing" to see how well your knots capture the original shape</p>
+            </div>
+            <div className="flex items-start space-x-3">
+              <span className="text-orange-500 text-xl">⚡</span>
+              <p className="text-gray-800"><strong>Don't overthink:</strong> Trust your intuition about what points seem most important</p>
+            </div>
+            <div className="flex items-start space-x-3">
+              <span className="text-red-500 text-xl">🔄</span>
+              <p className="text-gray-800"><strong>Experiment:</strong> You can remove and replace knots until you're satisfied</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const openTutorial = () => {
+    setShowTutorial(true);
+    setCurrentTutorialStep(0);
+  };
+
+  const closeTutorial = () => {
+    setShowTutorial(false);
+    setCurrentTutorialStep(0);
+  };
+
+  const startAnnotatingFromTutorial = () => {
+    setShowTutorial(false);
+    setCurrentTutorialStep(0);
+    setAnnotationMode(true);
+    setCurrentTrajectoryIndex(0);
+  };
+
+  const nextTutorialStep = () => {
+    if (currentTutorialStep < tutorialSteps.length - 1) {
+      setCurrentTutorialStep(prev => prev + 1);
+    }
+  };
+
+  const prevTutorialStep = () => {
+    if (currentTutorialStep > 0) {
+      setCurrentTutorialStep(prev => prev - 1);
+    }
+  };
+
   useEffect(() => {
     // Generate a unique session ID when component mounts
     const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -311,21 +692,42 @@ export default function PlaceKnots() {
     setTrajectories(prev => 
       prev.map((traj, index) => {
         if (index === currentTrajectoryIndex) {
-          // Keep the start and end knots, remove only the middle knots
+          // Get current manual knots (excluding start and end)
+          const manualKnots = traj.knots.filter(knot => 
+            !knot.id.startsWith('start-knot') && !knot.id.startsWith('end-knot')
+          );
           const startKnot = traj.knots.find(knot => knot.id.startsWith('start-knot'));
           const endKnot = traj.knots.find(knot => knot.id.startsWith('end-knot'));
-          const preservedKnots = [startKnot, endKnot].filter(knot => knot !== undefined) as KnotAnnotation[];
           
-          // Reset knot placement order for this trajectory
-          setKnotPlacementOrder(prev => {
-            const newOrderMap = new Map(prev);
-            traj.knots.forEach(knot => {
-              if (!knot.id.startsWith('start-knot') && !knot.id.startsWith('end-knot')) {
+          let adjustedManualKnots = [...manualKnots];
+          
+          // If reducing knot count, remove excess knots from the end
+          if (manualKnots.length > count) {
+            adjustedManualKnots = manualKnots.slice(0, count);
+            
+            // Clean up the removed knots from the placement order map
+            setKnotPlacementOrder(prev => {
+              const newOrderMap = new Map(prev);
+              manualKnots.slice(count).forEach(knot => {
                 newOrderMap.delete(knot.id);
-              }
+              });
+              
+              // Re-rank remaining manual knots to maintain sequential order (0, 1, 2, etc.)
+              adjustedManualKnots.forEach((knot, index) => {
+                newOrderMap.set(knot.id, index);
+              });
+              
+              return newOrderMap;
             });
-            return newOrderMap;
-          });
+          }
+          // If increasing knot count, keep all existing knots (no change needed)
+          
+          // Combine adjusted manual knots with start and end knots
+          const preservedKnots = [
+            ...adjustedManualKnots,
+            ...(startKnot ? [startKnot] : []),
+            ...(endKnot ? [endKnot] : [])
+          ];
           
           return { 
             ...traj, 
@@ -643,7 +1045,18 @@ export default function PlaceKnots() {
           <div className="space-y-6">
             {/* Instructions */}
             {!annotationMode ? (                <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4">Instructions</h2>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold text-gray-800">Instructions</h2>
+                    <button
+                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                      onClick={openTutorial}
+                    >
+                      Tutorial
+                    </button>
+                  </div>
+                  <div className="mb-4">
+                    <p className="text-gray-800 font-bold">If you do not understand what this website is about, click the Tutorial button above.</p>
+                  </div>
                   <div className="space-y-3 text-gray-600">
                     <p>• You will be shown 10 random trajectory curves</p>
                     <p>• For each curve, select the number of additional knots to place (3, 4, or 5)</p>
@@ -665,9 +1078,25 @@ export default function PlaceKnots() {
               </div>
             ) : (
               <div className="space-y-6">
+                {/* Header with Tutorial - Always visible */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-800">Place Knots - Annotation Tool</h1>
+                      <p className="text-gray-600">Annotate trajectory curves by placing knots at important points</p>
+                    </div>
+                    <button
+                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                      onClick={openTutorial}
+                    >
+                      Tutorial
+                    </button>
+                  </div>
+                </div>
+
                 {/* Progress indicator */}
                 <div className="bg-white rounded-lg shadow-md p-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold text-gray-800">
                       Trajectory {currentTrajectoryIndex + 1} of {trajectories.length}
                       <span className="text-blue-600 ml-2">(Track ID: {currentTrajectory?.trackId})</span>
@@ -685,6 +1114,24 @@ export default function PlaceKnots() {
                           }`}
                         />
                       ))}
+                    </div>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm text-gray-600">
+                      <span>Overall Progress</span>
+                      <span>{Math.round((currentTrajectoryIndex / trajectories.length) * 100)}% Complete</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${(currentTrajectoryIndex / trajectories.length) * 100}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Completed: {currentTrajectoryIndex}</span>
+                      <span>Remaining: {trajectories.length - currentTrajectoryIndex}</span>
                     </div>
                   </div>
                 </div>
@@ -949,6 +1396,84 @@ export default function PlaceKnots() {
           </div>
         )}
       </div>
+      
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <div className="fixed inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 bg-opacity-95 flex items-center justify-center z-50 p-8">
+          <div className="bg-white rounded-lg shadow-md max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="bg-white p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">{tutorialSteps[currentTutorialStep].title}</h2>
+                  <p className="text-gray-600 mt-1">Step {currentTutorialStep + 1} of {tutorialSteps.length}</p>
+                </div>
+                <button
+                  onClick={closeTutorial}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+                >
+                  ×
+                </button>
+              </div>
+              {/* Progress bar */}
+              <div className="bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-500 rounded-full h-2 transition-all duration-300"
+                  style={{ width: `${((currentTutorialStep + 1) / tutorialSteps.length) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-96 bg-white">
+              {tutorialSteps[currentTutorialStep].content}
+            </div>
+
+            {/* Footer */}
+            <div className="bg-white px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+              <div className="flex space-x-3">
+                <button
+                  onClick={prevTutorialStep}
+                  disabled={currentTutorialStep === 0}
+                  className={`px-4 py-2 rounded transition-colors font-medium ${
+                    currentTutorialStep === 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-500 hover:bg-gray-600 text-white'
+                  }`}
+                >
+                  ← Previous
+                </button>
+                
+                <Link href="/">
+                  <button className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded font-medium transition-colors">
+                    🏠 Back to Home
+                  </button>
+                </Link>
+              </div>
+
+              <span className="text-gray-600 font-medium">
+                {currentTutorialStep + 1} / {tutorialSteps.length}
+              </span>
+
+              {currentTutorialStep === tutorialSteps.length - 1 ? (
+                <button
+                  onClick={startAnnotatingFromTutorial}
+                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded font-medium transition-colors"
+                >
+                  Start Annotating! 🚀
+                </button>
+              ) : (
+                <button
+                  onClick={nextTutorialStep}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-medium transition-colors"
+                >
+                  Next →
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Submission Password Modal */}
       <SubmissionPasswordModal
