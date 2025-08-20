@@ -1,8 +1,10 @@
 package com.example.surveybackend.config;
 
+import com.example.surveybackend.entity.Admin;
 import com.example.surveybackend.entity.TrajectoryData;
 import com.example.surveybackend.service.TrajectoryDataService;
 import com.example.surveybackend.service.AdminService;
+import com.example.surveybackend.util.PasswordHashingUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ArrayList;
 
 @Component
@@ -29,6 +32,9 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private AdminService adminService;
     
+    @Autowired
+    private PasswordHashingUtil passwordHashingUtil;
+    
     @Value("${admin.default.username}")
     private String defaultAdminUsername;
     
@@ -39,7 +45,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         logger.info("Starting data initialization...");
         
-        // Initialize default admin
+        // Initialize default admin with password migration
         initializeDefaultAdmin();
         
         // Check if data already exists
@@ -114,18 +120,31 @@ public class DataInitializer implements CommandLineRunner {
     
     /**
      * Initialize default admin user if it doesn't exist
+     * Also handles migration of existing admin with plain text password to hashed password
      */
     private void initializeDefaultAdmin() {
         try {
-            if (!adminService.existsByUsername(defaultAdminUsername)) {
-                adminService.createAdmin(defaultAdminUsername, defaultAdminPassword);
-                logger.info("Default admin user created successfully with username: {}", 
-                    defaultAdminUsername);
+            Optional<Admin> existingAdmin = adminService.findByUsername(defaultAdminUsername);
+            
+            if (existingAdmin.isPresent()) {
+                Admin admin = existingAdmin.get();
+                // Check if the existing admin password needs to be migrated to hashed format
+                if (!passwordHashingUtil.isPasswordHashed(admin.getPassword())) {
+                    logger.info("Migrating existing admin password to hashed format");
+                    // Update the password to hashed format
+                    adminService.updatePassword(defaultAdminUsername, defaultAdminPassword);
+                    logger.info("Admin password successfully migrated to hashed format");
+                } else {
+                    logger.info("Default admin user already exists with hashed password");
+                }
             } else {
-                logger.info("Default admin user already exists");
+                // Create new admin with hashed password
+                adminService.createAdmin(defaultAdminUsername, defaultAdminPassword);
+                logger.info("Default admin user created successfully with username: {} (password hashed)", 
+                    defaultAdminUsername);
             }
         } catch (Exception e) {
-            logger.error("Error creating default admin user: {}", e.getMessage(), e);
+            logger.error("Error creating or migrating default admin user: {}", e.getMessage(), e);
         }
     }
 }
