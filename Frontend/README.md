@@ -1,4 +1,4 @@
-# Survey Website Frontend
+# Trajectory Annotation Website Frontend
 
 A Next.js-based frontend for the Trajectory Data Analysis and Knot Annotation Survey System. This application provides an interactive interface for annotating trajectory data and an administrative panel for managing annotations.
 

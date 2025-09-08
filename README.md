@@ -1,4 +1,4 @@
-# Survey Website - Trajectory Data Analysis
+# Trajectory Annotation Website - Trajectory Data Analysis
 
 A full-stack web application for analyzing pedestrian trajectory data with knot-finding capabilities. The system consists of a Spring Boot backend, Next.js frontend, and Python data processing scripts.
 

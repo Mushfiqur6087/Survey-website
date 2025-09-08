@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Survey Website Setup Script
-# This script helps you set up the entire Survey Website application
+# Trajectory Annotation Website Setup Script
+# This script helps you set up the entire Trajectory Annotation Website application
 
 set -e  # Exit on any error
 
-echo "🚀 Survey Website Setup Script"
+echo "🚀 Trajectory Annotation Website Setup Script"
 echo "================================"
 
 # Color codes for output
@@ -188,7 +188,7 @@ process_data() {
 
 # Main setup function
 main() {
-    echo "This script will help you set up the Survey Website application."
+    echo "This script will help you set up the Trajectory Annotation Website application."
     echo "Please ensure you have the required prerequisites installed."
     echo ""
     
