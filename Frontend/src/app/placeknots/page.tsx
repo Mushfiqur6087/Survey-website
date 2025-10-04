@@ -1044,15 +1044,41 @@ export default function PlaceKnots() {
         ) : trajectories.length > 0 ? (
           <div className="space-y-6">
             {/* Instructions */}
-            {!annotationMode ? (                <div className="bg-white rounded-lg shadow-md p-6">
+            {!annotationMode ? (      
+                <div className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-gray-800">Instructions</h2>
-                    <button
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                      onClick={openTutorial}
-                    >
-                      Tutorial
-                    </button>
+                    <div className="relative">
+                      {/* Animated Arrow pointing to Tutorial button */}
+                      <div className="absolute -left-16 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
+                        <svg
+                          width="50"
+                          height="20"
+                          viewBox="0 0 50 20"
+                          className="drop-shadow-lg animate-[wiggle_1s_ease-in-out_infinite]"
+                        >
+                          {/* Arrow line */}
+                          <path
+                            d="M 5 10 L 35 10"
+                            stroke="#10B981"
+                            strokeWidth="3"
+                            strokeDasharray="4,2"
+                            fill="none"
+                          />
+                          {/* Arrow head */}
+                          <polygon
+                            points="35,6 45,10 35,14"
+                            fill="#10B981"
+                          />
+                        </svg>
+                      </div>
+                      <button
+                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        onClick={openTutorial}
+                      >
+                        Tutorial
+                      </button>
+                    </div>
                   </div>
                   <div className="mb-4">
                     <p className="text-gray-800 font-bold">If you do not understand what this website is about, click the Tutorial button above.</p>
@@ -1085,12 +1111,37 @@ export default function PlaceKnots() {
                       <h1 className="text-2xl font-bold text-gray-800">Place Knots - Annotation Tool</h1>
                       <p className="text-gray-600">Annotate trajectory curves by placing knots at important points</p>
                     </div>
-                    <button
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                      onClick={openTutorial}
-                    >
-                      Tutorial
-                    </button>
+                    <div className="relative">
+                      {/* Animated Arrow pointing to Tutorial button */}
+                      <div className="absolute -left-16 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
+                        <svg
+                          width="50"
+                          height="20"
+                          viewBox="0 0 50 20"
+                          className="drop-shadow-lg animate-[wiggle_1s_ease-in-out_infinite]"
+                        >
+                          {/* Arrow line */}
+                          <path
+                            d="M 5 10 L 35 10"
+                            stroke="#10B981"
+                            strokeWidth="3"
+                            strokeDasharray="4,2"
+                            fill="none"
+                          />
+                          {/* Arrow head */}
+                          <polygon
+                            points="35,6 45,10 35,14"
+                            fill="#10B981"
+                          />
+                        </svg>
+                      </div>
+                      <button
+                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        onClick={openTutorial}
+                      >
+                        Tutorial
+                      </button>
+                    </div>
                   </div>
                 </div>
 
