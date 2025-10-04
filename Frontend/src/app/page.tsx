@@ -44,7 +44,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8 overflow-x-hidden">
       <div className="max-w-6xl mx-auto relative">
         
 
@@ -246,7 +246,11 @@ export default function Home() {
 
         {/* Floating Dashed Arrow Infographic */}
         {connectionStatus === 'connected' && (
-        <div className="absolute right-4 z-50 scale-150">
+        <div className="absolute z-50 
+                        right-4 bottom-180 scale-75 
+                        md:right-1/12 md:bottom-140 md:scale-100 
+                        lg:right-4 lg:bottom-120 lg:scale-125
+                        pointer-events-none">
           <div className="relative">
             {/* Dashed Arrow */}
             <svg
