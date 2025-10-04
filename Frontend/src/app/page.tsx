@@ -1,23 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { trajectoryAPI, TrajectoryData } from '@/lib/api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { trajectoryAPI } from '@/lib/api';
 import Link from 'next/link';
 
 export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [healthMessage, setHealthMessage] = useState<string>('');
-  const [uniqueTrackIds, setUniqueTrackIds] = useState<number[]>([]);
-  const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
-  const [trajectoryData, setTrajectoryData] = useState<TrajectoryData[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
   // Check backend connection on component mount
   useEffect(() => {
     checkBackendConnection();
-    loadUniqueTrackIds();
   }, []);
 
   const checkBackendConnection = async () => {
@@ -29,32 +23,6 @@ export default function Home() {
       console.error('Backend connection failed:', err);
       setConnectionStatus('error');
       setError('Failed to connect to backend. Make sure the Spring Boot server is running on port 8080.');
-    }
-  };
-
-  const loadUniqueTrackIds = async () => {
-    try {
-      const trackIds = await trajectoryAPI.getUniqueTrackIds();
-      setUniqueTrackIds(trackIds);
-    } catch (err) {
-      console.error('Failed to load track IDs:', err);
-    }
-  };
-
-  const loadTrajectoryData = async (trackId: number) => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await trajectoryAPI.getTrajectoryByTrackId(trackId);
-      // Sort data by sceneId to ensure proper trajectory order
-      const sortedData = data.sort((a, b) => a.sceneId - b.sceneId);
-      setTrajectoryData(sortedData);
-      setSelectedTrackId(trackId);
-    } catch (err) {
-      console.error('Failed to load trajectory data:', err);
-      setError('Failed to load trajectory data');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -77,10 +45,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto relative">
+        
+
         {/* Header */}
-        <header className="text-center mb-8 relative">
-          <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-2xl shadow-2xl p-8 overflow-hidden">
+        <header className="text-center mb-4 relative">
+          <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-2xl shadow-2xl p-8 pb-3 overflow-hidden">
             {/* Background decorative elements */}
             <div className="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-white/10 to-transparent rounded-full transform -translate-x-20 -translate-y-20"></div>
             <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-white/10 to-transparent rounded-full transform translate-x-16 translate-y-16"></div>
@@ -91,27 +61,27 @@ export default function Home() {
                   Trajectory Annotation Website
                 </span>
               </h1>
-              <p className="text-blue-100 text-lg mb-4 max-w-2xl mx-auto">
+              <p className="text-blue-100 text-lg mb-4 max-w-3xl mx-auto">
                 Advanced platform for pedestrian trajectory analysis and human annotation research
               </p>
-              <ConnectionStatusBadge />
-              {healthMessage && (
+              {/* <ConnectionStatusBadge /> */}
+              {/* {healthMessage && (
                 <div className="mt-4 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg p-3 inline-block">
                   <p className="text-green-100 font-medium">{healthMessage}</p>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </header>
 
         {/* Research Purpose Section */}
-        <div className="relative bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 rounded-2xl shadow-xl p-8 mb-8 overflow-hidden">
+        <div className="relative bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 rounded-2xl shadow-xl p-6 mb-8 overflow-hidden">
           {/* Background decoration */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full opacity-20 transform translate-x-16 -translate-y-16"></div>
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-indigo-200 to-blue-200 rounded-full opacity-20 transform -translate-x-12 translate-y-12"></div>
+          {/* <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full opacity-20 transform translate-x-16 -translate-y-16"></div> */}
+          {/* <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-indigo-200 to-blue-200 rounded-full opacity-20 transform -translate-x-12 translate-y-12"></div> */}
           
           <div className="relative z-10">
-            <div className="flex items-center mb-6">
+            <div className="flex items-center mb-4">
               <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-3 mr-4">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -181,152 +151,82 @@ export default function Home() {
           </div>
         )}
 
-        {/* Main Content */}
+        {/* Main Content - Overview Video/GIF Section */}
         {connectionStatus === 'connected' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Track Selection Panel */}
-            <div className="relative bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-xl p-6 border border-blue-200/50">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-200 to-indigo-200 rounded-full opacity-30 transform translate-x-10 -translate-y-10"></div>
-              <div className="relative z-10">
-                <div className="flex items-center mb-4">
-                  <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full p-2 mr-3">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                  </div>
-                  <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Select Track ID</h2>
-                </div>
-                <div className="space-y-2 max-h-96 overflow-y-auto bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-white/30">
-                  {uniqueTrackIds.map((trackId) => (
-                    <button
-                      key={trackId}
-                      onClick={() => loadTrajectoryData(trackId)}
-                      disabled={loading}
-                      className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] ${
-                        selectedTrackId === trackId
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                          : 'bg-white/70 hover:bg-white/90 text-gray-700 shadow-sm hover:shadow-md'
-                      } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <span className="font-medium">Track ID: {trackId}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-4 bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-white/30">
-                  <p className="text-sm text-gray-600 font-medium">
-                    📊 Total Tracks: <span className="text-blue-600 font-bold">{uniqueTrackIds.length}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="mb-8">
+            <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl shadow-xl p-8 overflow-hidden">
+              {/* Background decoration */}
+              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-indigo-200 to-purple-200 rounded-full opacity-20 transform -translate-x-16 -translate-y-16"></div>
+              <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-tr from-purple-200 to-pink-200 rounded-full opacity-20 transform translate-x-20 translate-y-20"></div>
 
-            {/* Trajectory Data Panel */}
-            <div className="lg:col-span-2 relative bg-gradient-to-br from-purple-50 to-pink-100 rounded-xl shadow-xl p-6 border border-purple-200/50">
-              <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-purple-200 to-pink-200 rounded-full opacity-30 transform -translate-x-12 -translate-y-12"></div>
               <div className="relative z-10">
-                <div className="flex items-center mb-4">
-                  <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-full p-2 mr-3">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <div className="flex items-center mb-6">
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-3 mr-4">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    Trajectory Graph
-                    {selectedTrackId && (
-                      <span className="text-blue-600 ml-2">(Track ID: {selectedTrackId})</span>
-                    )}
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    Platform Overview
                   </h2>
                 </div>
 
-                {loading ? (
-                  <div className="flex items-center justify-center py-8 bg-white/50 backdrop-blur-sm rounded-lg border border-white/30">
-                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
-                    <span className="ml-3 text-gray-600 font-medium">Loading trajectory data...</span>
-                  </div>
-                ) : trajectoryData.length > 0 ? (
-                  <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-white/30">
-                    <div className="mb-4 flex justify-between items-center">
-                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                        📈 Data Points: {trajectoryData.length}
-                      </div>
-                      <div className="bg-gradient-to-r from-gray-100 to-gray-200 p-3 rounded-lg border border-gray-300/50">
-                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                          <div><strong>X Range:</strong> {Math.min(...trajectoryData.map(d => d.localX)).toFixed(3)} to {Math.max(...trajectoryData.map(d => d.localX)).toFixed(3)}</div>
-                          <div><strong>Y Range:</strong> {Math.min(...trajectoryData.map(d => d.localY)).toFixed(3)} to {Math.max(...trajectoryData.map(d => d.localY)).toFixed(3)}</div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                  {/* Video/GIF Section */}
+                  <div className="relative">
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/30 shadow-lg">
+                      <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                        <div className="text-center">
+                          <div className="text-6xl mb-4">🎬</div>
+                          <p className="text-gray-600 font-medium mb-2">Interactive Demo Video</p>
+                          <p className="text-sm text-gray-500">Video demonstration of trajectory annotation tools</p>
+                          <button className="mt-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">
+                            ▶Play Demo
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <div className="h-96 w-full bg-white rounded-lg p-2 shadow-inner border border-gray-200">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart
-                          data={trajectoryData}
-                          margin={{
-                            top: 20,
-                            right: 30,
-                            bottom: 80,
-                            left: 80,
-                          }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
-                          <XAxis 
-                            type="number"
-                            dataKey="localX"
-                            domain={['dataMin - 0.5', 'dataMax + 0.5']}
-                            tickFormatter={(value) => value.toFixed(2)}
-                            label={{ value: 'Local X', position: 'insideBottomLeft', offset: -15, style: { fill: '#3B82F6', fontWeight: 'bold' } }}
-                            stroke="#6366f1"
-                          />
-                          <YAxis 
-                            type="number"
-                            dataKey="localY"
-                            domain={['dataMin - 0.5', 'dataMax + 0.5']}
-                            tickFormatter={(value) => value.toFixed(2)}
-                            label={{ value: 'Local Y', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#3B82F6', fontWeight: 'bold' } }}
-                            stroke="#6366f1"
-                          />
-                          <Tooltip 
-                            content={({ active, payload, label }) => {
-                              if (active && payload && payload.length) {
-                                const data = payload[0].payload;
-                                return (
-                                  <div className="bg-gradient-to-br from-white to-blue-50 p-4 border border-blue-200 rounded-xl shadow-xl backdrop-blur-sm">
-                                    <p className="font-bold text-gray-800 mb-1">{`🎯 Scene ID: ${data.sceneId}`}</p>
-                                    <p className="text-blue-600 font-medium">{`📍 X: ${Number(data.localX).toFixed(4)}`}</p>
-                                    <p className="text-red-600 font-medium">{`📍 Y: ${Number(data.localY).toFixed(4)}`}</p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Legend wrapperStyle={{ color: '#3B82F6', fontWeight: 'bold' }} />
-                          <Line 
-                            type="linear"
-                            dataKey="localY"
-                            stroke="url(#trajectoryGradient)"
-                            strokeWidth={4}
-                            dot={false}
-                            activeDot={{ r: 8, fill: '#3B82F6', stroke: '#ffffff', strokeWidth: 3, filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.5))' }}
-                            name="🚶 Trajectory Path"
-                            connectNulls={false}
-                          />
-                          <defs>
-                            <linearGradient id="trajectoryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor="#DC2626" />
-                              <stop offset="50%" stopColor="#7C3AED" />
-                              <stop offset="100%" stopColor="#2563EB" />
-                            </linearGradient>
-                          </defs>
-                        </LineChart>
-                      </ResponsiveContainer>
+                  </div>
+
+                  {/* Key Features */}
+                  <div className="space-y-4">
+                    <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <div className="bg-green-500 rounded-full p-1">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <h3 className="font-semibold text-gray-800">Real-time Annotation</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">Annotate pedestrian trajectories with precision using our intuitive tools</p>
+                    </div>
+
+                    <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <div className="bg-blue-500 rounded-full p-1">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                        </div>
+                        <h3 className="font-semibold text-gray-800">Pattern Analysis</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">Compare and analyze trajectory patterns across different scenarios</p>
+                    </div>
+
+                    <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <div className="bg-purple-500 rounded-full p-1">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                          </svg>
+                        </div>
+                        <h3 className="font-semibold text-gray-800">Knot Placement</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">Place strategic knots to mark significant trajectory points</p>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-12 bg-white/50 backdrop-blur-sm rounded-lg border border-white/30">
-                    <div className="text-6xl mb-4">📊</div>
-                    <p className="text-gray-500 text-lg font-medium">Select a track ID to view trajectory graph</p>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
@@ -354,26 +254,50 @@ export default function Home() {
           </div>
         )}
 
+        {/* Floating Dashed Arrow Infographic */}
+        <div className="absolute right-4 z-50 scale-150">
+          <div className="relative">
+            {/* Dashed Arrow */}
+            <svg
+              width="120"
+              height="80"
+              viewBox="0 0 120 80"
+              className="drop-shadow-lg"
+            >
+              {/* Dashed line path - mirrored from right to left */}
+              <path
+                d="M 120 5 Q 50 10 10 70"
+                stroke="#3B82F6"
+                strokeWidth="3"
+                strokeDasharray="8,4"
+                fill="none"
+                className="animate-pulse"
+              />
+              {/* Arrow head - positioned at the left end */}
+              <polygon
+                points="1,65 25,85 1,80"
+                fill="#3B82F6"
+                className="animate-pulse"
+              />
+            </svg>
+
+            {/* Click Here Badge */}
+            <div className="absolute -top-6 -right-20 rotate-30 bg-white/90 backdrop-blur-sm text-blue-600 px-3 py-1 rounded-full text-sm font-bold shadow-lg border-2 border-blue-200 animate-pulse">
+              CLICK HERE!
+            </div>
+          </div>
+        </div>
+
         {/* Action Buttons */}
         {connectionStatus === 'connected' && (
           <div className="mt-8">
+            
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8 shadow-lg">
               <h3 className="text-2xl font-bold text-center text-gray-800 mb-6">
                 Explore Our Research Tools
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/admin">
-                  <div className="group relative bg-gradient-to-br from-red-400 to-red-600 rounded-xl p-6 text-center hover:from-red-500 hover:to-red-700 transition-all duration-300 transform hover:scale-105 hover:shadow-xl cursor-pointer">
-                    <div className="bg-white/20 rounded-full p-3 w-16 h-16 mx-auto mb-4 group-hover:bg-white/30 transition-colors">
-                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <h4 className="text-xl font-bold text-white mb-2">Admin Portal</h4>
-                    <p className="text-red-100 text-sm">Manage data and system settings</p>
-                  </div>
-                </Link>
-                
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Link href="/knot-comparison">
                   <div className="group relative bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl p-6 text-center hover:from-orange-500 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 hover:shadow-xl cursor-pointer">
                     <div className="bg-white/20 rounded-full p-3 w-16 h-16 mx-auto mb-4 group-hover:bg-white/30 transition-colors">
@@ -385,7 +309,7 @@ export default function Home() {
                     <p className="text-orange-100 text-sm">Compare trajectory annotations</p>
                   </div>
                 </Link>
-                
+
                 <Link href="/placeknots">
                   <div className="group relative bg-gradient-to-br from-green-400 to-green-600 rounded-xl p-6 text-center hover:from-green-500 hover:to-green-700 transition-all duration-300 transform hover:scale-105 hover:shadow-xl cursor-pointer">
                     <div className="bg-white/20 rounded-full p-3 w-16 h-16 mx-auto mb-4 group-hover:bg-white/30 transition-colors">

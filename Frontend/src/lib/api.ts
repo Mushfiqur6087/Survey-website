@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = '/api';
+const BASE_URL = 'https://trajectory-survey.twiggle.tech/api';
 
 export interface TrajectoryData {
   id: number;
