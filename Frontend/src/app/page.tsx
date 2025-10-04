@@ -144,21 +144,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
-          </div>
-        )}
-
         {/* Main Content - Overview Video/GIF Section */}
-        {connectionStatus === 'connected' && (
           <div className="mb-8">
             <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl shadow-xl p-8 overflow-hidden">
-              {/* Background decoration */}
-              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-indigo-200 to-purple-200 rounded-full opacity-20 transform -translate-x-16 -translate-y-16"></div>
-              <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-tr from-purple-200 to-pink-200 rounded-full opacity-20 transform translate-x-20 translate-y-20"></div>
-
               <div className="relative z-10">
                 <div className="flex items-center mb-6">
                   <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full p-3 mr-4">
@@ -171,19 +159,16 @@ export default function Home() {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
                   {/* Video/GIF Section */}
-                  <div className="relative">
+                  <div className="relative lg:col-span-2">
                     <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/30 shadow-lg">
                       <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                        <div className="text-center">
-                          <div className="text-6xl mb-4">🎬</div>
-                          <p className="text-gray-600 font-medium mb-2">Interactive Demo Video</p>
-                          <p className="text-sm text-gray-500">Video demonstration of trajectory annotation tools</p>
-                          <button className="mt-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">
-                            ▶Play Demo
-                          </button>
-                        </div>
+                        <img
+                          src="/gifs/output.gif"
+                          alt="Platform Overview"
+                          className="object-contain w-full h-full rounded-lg"
+                        />
                       </div>
                     </div>
                   </div>
@@ -230,8 +215,13 @@ export default function Home() {
               </div>
             </div>
           </div>
-        )}
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            {error}
+          </div>
+        )}
         {/* Backend Instructions */}
         {connectionStatus === 'error' && (
           <div className="bg-white rounded-lg shadow-md p-6 mt-8">
@@ -255,6 +245,7 @@ export default function Home() {
         )}
 
         {/* Floating Dashed Arrow Infographic */}
+        {connectionStatus === 'connected' && (
         <div className="absolute right-4 z-50 scale-150">
           <div className="relative">
             {/* Dashed Arrow */}
@@ -287,6 +278,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Action Buttons */}
         {connectionStatus === 'connected' && (
@@ -333,7 +325,6 @@ export default function Home() {
         )}
 
         {/* Collaboration Section */}
-        {connectionStatus === 'connected' && (
           <div className="mt-8">
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-xl font-semibold text-gray-800 mb-4">Collaboration</h3>
@@ -347,7 +338,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-        )}
       </div>
     </div>
   );
