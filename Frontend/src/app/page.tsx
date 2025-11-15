@@ -43,19 +43,7 @@ export default function Home() {
       <div className="relative overflow-hidden border-b bg-white/50 backdrop-blur-sm">
         <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          {/* Status Badge */}
-          <div className="flex justify-center mb-6">
-            <Badge
-              variant={connectionStatus === 'connected' ? 'default' : connectionStatus === 'error' ? 'destructive' : 'secondary'}
-              className="animate-fade-in"
-            >
-              {connectionStatus === 'checking' && '⏳ Connecting to System...'}
-              {connectionStatus === 'connected' && '✓ System Online'}
-              {connectionStatus === 'error' && '⚠ Connection Issue'}
-            </Badge>
-          </div>
-
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           {/* Hero Content */}
           <div className="text-center space-y-6 animate-fade-in">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
