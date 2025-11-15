@@ -383,7 +383,7 @@ export default function PlaceKnots() {
               </div>
             </div>
             <div className="mt-4">
-              <Image
+              <img
                 src="/tutorial/knot-placement/1-knot-count-selection.png"
                 alt="Knot count selection interface showing 3, 4, 5 additional knots buttons"
                 className="w-full max-w-2xl mx-auto rounded-lg border border-gray-300 shadow-sm"
@@ -413,7 +413,7 @@ export default function PlaceKnots() {
               </div>
             </div>
             <div className="mt-4">
-              <Image
+              <img
                 src="/tutorial/knot-placement/2-click-on-curve.png"
                 alt="Trajectory chart showing how to click on the red curve to place knots"
                 className="w-full max-w-2xl mx-auto rounded-lg border border-gray-300 shadow-sm"
@@ -471,7 +471,7 @@ export default function PlaceKnots() {
               </div>
             </div>
             <div className="mt-4">
-              <Image
+              <img
                 src="/tutorial/knot-placement/3-knot-drawing.png"
                 alt="Your Knot Drawing visualization showing connected knots with blue lines"
                 className="w-full max-w-2xl mx-auto rounded-lg border border-gray-300 shadow-sm"
@@ -583,7 +583,7 @@ export default function PlaceKnots() {
               and easy removal options.
             </p>
             <div className="mt-4">
-              <Image
+              <img
                 src="/tutorial/knot-placement/4-placed-knots-list.png"
                 alt="Placed knots list showing knot details and remove buttons"
                 className="w-full max-w-2xl mx-auto rounded-lg border border-gray-300 shadow-sm"
