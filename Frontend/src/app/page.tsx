@@ -13,7 +13,6 @@ import {
   Lightbulb,
   Target,
   Zap,
-  BarChart3,
   Users,
   Play,
   AlertTriangle,
@@ -39,14 +38,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Hero Section */}
+      {/* Hero Section - Compact */}
       <div className="relative overflow-hidden border-b bg-white/50 backdrop-blur-sm">
         <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Hero Content */}
-          <div className="text-center space-y-6 animate-fade-in">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
+          <div className="text-center space-y-4 animate-fade-in">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600">
                 Trajectory Annotation
               </span>
@@ -54,86 +53,22 @@ export default function Home() {
               <span className="text-gray-900">Research Platform</span>
             </h1>
 
-            <p className="text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
               Advanced platform for pedestrian trajectory analysis and human annotation research
             </p>
 
             {connectionStatus === 'connected' && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4">
                 <Link href="/placeknots">
-                  <Button size="lg" className="text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  <Button size="lg" className="px-8 py-5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                     <Play className="mr-2 h-5 w-5" />
                     Start Annotation
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link href="/sys2025">
-                  <Button variant="outline" size="lg" className="text-lg px-8 py-6 rounded-full">
-                    View Dashboard
-                  </Button>
-                </Link>
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Research Purpose Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Research Purpose
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Understanding the challenge, our approach, and the potential impact
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* The Challenge */}
-          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-red-400 to-orange-500 flex items-center justify-center mb-4">
-                <AlertTriangle className="h-6 w-6 text-white" />
-              </div>
-              <CardTitle className="text-xl">The Challenge</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-base leading-relaxed">
-                Autonomous vehicle safety relies on testing against a wide range of pedestrian behaviors, from common crossing patterns to rare and unpredictable movements. Current simulation models and clustering methods often fall short because they miss subtle but important variations and lack a universally accepted benchmark for evaluating trajectory quality.
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          {/* Our Solution */}
-          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center mb-4">
-                <Lightbulb className="h-6 w-6 text-white" />
-              </div>
-              <CardTitle className="text-xl">Our Solution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-base leading-relaxed">
-                Our research work addresses this gap by gathering human annotations on pedestrian trajectories, allowing us to understand how people naturally perceive and group different movement patterns. These insights will help us group trajectories into meaningful patterns that capture both typical and unusual behaviors.
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          {/* The Impact */}
-          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center mb-4">
-                <Zap className="h-6 w-6 text-white" />
-              </div>
-              <CardTitle className="text-xl">The Impact</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-base leading-relaxed">
-                By using human judgment alongside data-driven methods, we can make simulations more realistic and better prepared for real-world situations, ultimately improving autonomous vehicle safety and reliability.
-              </CardDescription>
-            </CardContent>
-          </Card>
         </div>
       </div>
 
@@ -278,6 +213,65 @@ export default function Home() {
           </Card>
         </div>
       )}
+
+      {/* Research Purpose Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            Research Purpose
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Understanding the challenge, our approach, and the potential impact
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* The Challenge */}
+          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <CardHeader>
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-red-400 to-orange-500 flex items-center justify-center mb-4">
+                <AlertTriangle className="h-6 w-6 text-white" />
+              </div>
+              <CardTitle className="text-xl">The Challenge</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base leading-relaxed">
+                Autonomous vehicle safety relies on testing against a wide range of pedestrian behaviors, from common crossing patterns to rare and unpredictable movements. Current simulation models and clustering methods often fall short because they miss subtle but important variations and lack a universally accepted benchmark for evaluating trajectory quality.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          {/* Our Solution */}
+          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <CardHeader>
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center mb-4">
+                <Lightbulb className="h-6 w-6 text-white" />
+              </div>
+              <CardTitle className="text-xl">Our Solution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base leading-relaxed">
+                Our research work addresses this gap by gathering human annotations on pedestrian trajectories, allowing us to understand how people naturally perceive and group different movement patterns. These insights will help us group trajectories into meaningful patterns that capture both typical and unusual behaviors.
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          {/* The Impact */}
+          <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <CardHeader>
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center mb-4">
+                <Zap className="h-6 w-6 text-white" />
+              </div>
+              <CardTitle className="text-xl">The Impact</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base leading-relaxed">
+                By using human judgment alongside data-driven methods, we can make simulations more realistic and better prepared for real-world situations, ultimately improving autonomous vehicle safety and reliability.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Collaboration Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

@@ -4,18 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   Home,
   Target,
-  BarChart3,
   Menu,
   X,
-  Database,
-  FileText,
-  Settings,
-  ChevronRight,
-  LogOut
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -107,37 +101,6 @@ export default function Sidebar() {
             >
               Start Survey
             </NavLink>
-            <NavLink
-              href="/sys2025"
-              icon={<BarChart3 className="h-5 w-5" />}
-              onClick={() => setIsOpen(false)}
-            >
-              Dashboard
-            </NavLink>
-          </div>
-
-          <Separator className="my-4" />
-
-          <div>
-            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Admin
-            </div>
-            <div className="space-y-1 mt-2">
-              <NavLink
-                href="/sys2025/tracks"
-                icon={<Database className="h-5 w-5" />}
-                onClick={() => setIsOpen(false)}
-              >
-                All Tracks
-              </NavLink>
-              <NavLink
-                href="/test-password"
-                icon={<FileText className="h-5 w-5" />}
-                onClick={() => setIsOpen(false)}
-              >
-                Test Password
-              </NavLink>
-            </div>
           </div>
         </nav>
 
