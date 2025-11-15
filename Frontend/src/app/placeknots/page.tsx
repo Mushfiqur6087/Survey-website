@@ -1889,7 +1889,7 @@ export default function PlaceKnots() {
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-96 bg-white">
+            <div className="p-6 overflow-y-auto max-h-196 bg-white">
               {tutorialSteps[currentTutorialStep].content}
             </div>
 
