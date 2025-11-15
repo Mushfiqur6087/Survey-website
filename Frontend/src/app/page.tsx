@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { trajectoryAPI } from '@/lib/api';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useState, useEffect } from "react";
+import { trajectoryAPI } from "@/lib/api";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   ArrowRight,
   CheckCircle,
@@ -17,11 +23,13 @@ import {
   Play,
   AlertTriangle,
   Sparkles,
-  BarChart3
-} from 'lucide-react';
+  BarChart3,
+} from "lucide-react";
 
 export default function Home() {
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [connectionStatus, setConnectionStatus] = useState<
+    "checking" | "connected" | "error"
+  >("checking");
 
   useEffect(() => {
     checkBackendConnection();
@@ -30,10 +38,10 @@ export default function Home() {
   const checkBackendConnection = async () => {
     try {
       await trajectoryAPI.checkHealth();
-      setConnectionStatus('connected');
+      setConnectionStatus("connected");
     } catch (err) {
-      console.error('Backend connection failed:', err);
-      setConnectionStatus('error');
+      console.error("Backend connection failed:", err);
+      setConnectionStatus("error");
     }
   };
 
@@ -55,14 +63,18 @@ export default function Home() {
             </h1>
 
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-              Advanced platform for pedestrian trajectory analysis and human annotation research
+              Advanced platform for pedestrian trajectory analysis and human
+              annotation research
             </p>
 
-            {connectionStatus === 'connected' && (
+            {connectionStatus === "connected" && (
               <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4">
                 <Link href="/placeknots">
-                  <Button size="lg" className="px-8 py-5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    <Play className="mr-2 h-5 w-5" />
+                  <Button
+                    size="xl"
+                    className="px-8 py-5 rounded-full border-2 border-teal-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  >
+                    <Play className="mr-2 h-8 w-8" />
                     Start Annotation
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -107,12 +119,15 @@ export default function Home() {
                     <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                       <CheckCircle className="h-5 w-5 text-green-600" />
                     </div>
-                    <CardTitle className="text-lg">Real-time Annotation</CardTitle>
+                    <CardTitle className="text-lg">
+                      Real-time Annotation
+                    </CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Annotate pedestrian trajectories with precision using our intuitive tools
+                    Annotate pedestrian trajectories with precision using our
+                    intuitive tools
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -128,7 +143,8 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Compare and analyze trajectory patterns across different scenarios
+                    Compare and analyze trajectory patterns across different
+                    scenarios
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -154,7 +170,7 @@ export default function Home() {
       </div>
 
       {/* CTA Section */}
-      {connectionStatus === 'connected' && (
+      {connectionStatus === "connected" && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <Card className="bg-gradient-to-r from-blue-600 to-purple-600 border-none shadow-2xl overflow-hidden">
             <CardContent className="py-16 px-8 text-center relative">
@@ -172,13 +188,14 @@ export default function Home() {
                   Ready to Contribute?
                 </h2>
                 <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-                  Join our research and help advance autonomous vehicle safety through trajectory annotation
+                  Join our research and help advance autonomous vehicle safety
+                  through trajectory annotation
                 </p>
                 <Link href="/placeknots">
                   <Button
                     size="lg"
                     variant="secondary"
-                    className="text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                    className="text-lg px-8 py-6 text-white border-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                   >
                     Begin Annotation Now
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -191,22 +208,33 @@ export default function Home() {
       )}
 
       {/* Connection Error */}
-      {connectionStatus === 'error' && (
+      {connectionStatus === "error" && (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <Card className="border-destructive shadow-xl">
             <CardHeader>
-              <CardTitle className="text-destructive">Backend Connection Required</CardTitle>
-              <CardDescription>Unable to connect to the annotation server</CardDescription>
+              <CardTitle className="text-destructive">
+                Backend Connection Required
+              </CardTitle>
+              <CardDescription>
+                Unable to connect to the annotation server
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-sm text-muted-foreground space-y-2">
-                <p>To use this platform, ensure the backend server is running:</p>
+              {/*<div className="text-sm text-muted-foreground space-y-2">
+                <p>
+                  To use this platform, ensure the backend server is running:
+                </p>
                 <ol className="list-decimal list-inside space-y-1 ml-4">
                   <li>Navigate to the Backend directory</li>
-                  <li>Run: <code className="bg-muted px-2 py-1 rounded">./mvnw spring-boot:run</code></li>
+                  <li>
+                    Run:{" "}
+                    <code className="bg-muted px-2 py-1 rounded">
+                      ./mvnw spring-boot:run
+                    </code>
+                  </li>
                   <li>Wait for the server to start on port 8080</li>
                 </ol>
-              </div>
+              </div>*/}
               <Button onClick={checkBackendConnection} className="w-full">
                 Retry Connection
               </Button>
@@ -237,7 +265,12 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-base leading-relaxed">
-                Autonomous vehicle safety relies on testing against a wide range of pedestrian behaviors, from common crossing patterns to rare and unpredictable movements. Current simulation models and clustering methods often fall short because they miss subtle but important variations and lack a universally accepted benchmark for evaluating trajectory quality.
+                Autonomous vehicle safety relies on testing against a wide range
+                of pedestrian behaviors, from common crossing patterns to rare
+                and unpredictable movements. Current simulation models and
+                clustering methods often fall short because they miss subtle but
+                important variations and lack a universally accepted benchmark
+                for evaluating trajectory quality.
               </CardDescription>
             </CardContent>
           </Card>
@@ -252,7 +285,12 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-base leading-relaxed">
-                Our research work addresses this gap by gathering human annotations on pedestrian trajectories, allowing us to understand how people naturally perceive and group different movement patterns. These insights will help us group trajectories into meaningful patterns that capture both typical and unusual behaviors.
+                Our research work addresses this gap by gathering human
+                annotations on pedestrian trajectories, allowing us to
+                understand how people naturally perceive and group different
+                movement patterns. These insights will help us group
+                trajectories into meaningful patterns that capture both typical
+                and unusual behaviors.
               </CardDescription>
             </CardContent>
           </Card>
@@ -267,7 +305,10 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <CardDescription className="text-base leading-relaxed">
-                By using human judgment alongside data-driven methods, we can make simulations more realistic and better prepared for real-world situations, ultimately improving autonomous vehicle safety and reliability.
+                By using human judgment alongside data-driven methods, we can
+                make simulations more realistic and better prepared for
+                real-world situations, ultimately improving autonomous vehicle
+                safety and reliability.
               </CardDescription>
             </CardContent>
           </Card>
@@ -285,8 +326,10 @@ export default function Home() {
               <CardTitle className="text-2xl">Collaboration</CardTitle>
             </div>
             <CardDescription className="text-base">
-              This project is a joint collaboration between Bangladesh University of Engineering and Technology (BUET),
-              California Polytechnic State University (Cal Poly), and the University of California, Santa Cruz (UCSC)
+              This project is a joint collaboration between Bangladesh
+              University of Engineering and Technology (BUET), California
+              Polytechnic State University (Cal Poly), and the University of
+              California, Santa Cruz (UCSC)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -295,19 +338,23 @@ export default function Home() {
               <div className="flex items-start gap-3">
                 <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <p className="text-gray-700">
-                  <strong>Dr. Golam Md Muktadir, PHD</strong>, University of California, Santa Cruz
+                  <strong>Dr. Golam Md Muktadir, PHD</strong>, University of
+                  California, Santa Cruz
                 </p>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <p className="text-gray-700">
-                  <strong>Dr. A. B. M. Alim Al Islam, Professor</strong>, Bangladesh University of Engineering and Technology (BUET)
+                  <strong>Dr. A. B. M. Alim Al Islam, Professor</strong>,
+                  Bangladesh University of Engineering and Technology (BUET)
                 </p>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <p className="text-gray-700">
-                  <strong>Dr. Fahim Khan, Assistant Professor</strong>, Computer Science and Software Engineering, California Polytechnic State University
+                  <strong>Dr. Fahim Khan, Assistant Professor</strong>, Computer
+                  Science and Software Engineering, California Polytechnic State
+                  University
                 </p>
               </div>
             </div>
@@ -319,7 +366,10 @@ export default function Home() {
       <footer className="border-t bg-white/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-sm text-muted-foreground">
-            <p>© 2024 Trajectory Annotation Research Platform. All rights reserved.</p>
+            <p>
+              © 2025 Trajectory Annotation Research Platform. All rights
+              reserved.
+            </p>
           </div>
         </div>
       </footer>

@@ -1,6 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
-const BASE_URL = '/api';
+const BASE_URL = "/api";
+// const BASE_URL = "https://trajectory-survey.twiggle.tech/api";
 
 export interface TrajectoryData {
   id: number;
@@ -62,38 +63,42 @@ export interface SubmissionPasswordResponse {
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 export const trajectoryAPI = {
   // Health check
   checkHealth: async (): Promise<string> => {
-    const response = await api.get('/health');
+    const response = await api.get("/health");
     return response.data;
   },
 
   // Get all trajectories
   getAllTrajectories: async (): Promise<TrajectoryData[]> => {
-    const response = await api.get('/trajectories');
+    const response = await api.get("/trajectories");
     return response.data;
   },
 
   // Get all unique track IDs
   getUniqueTrackIds: async (): Promise<number[]> => {
-    const response = await api.get('/trajectories/unique-track-ids');
+    const response = await api.get("/trajectories/unique-track-ids");
     return response.data;
   },
 
   // Get trajectory data by track ID
-  getTrajectoryByTrackId: async (trackId: number): Promise<TrajectoryData[]> => {
+  getTrajectoryByTrackId: async (
+    trackId: number,
+  ): Promise<TrajectoryData[]> => {
     const response = await api.get(`/trajectories/track/${trackId}`);
     return response.data;
   },
 
   // Get trajectory data by multiple track IDs
-  getTrajectoryByTrackIds: async (trackIds: number[]): Promise<TrajectoryData[]> => {
-    const response = await api.post('/trajectories/tracks', trackIds);
+  getTrajectoryByTrackIds: async (
+    trackIds: number[],
+  ): Promise<TrajectoryData[]> => {
+    const response = await api.post("/trajectories/tracks", trackIds);
     return response.data;
   },
 
@@ -105,16 +110,19 @@ export const trajectoryAPI = {
 
   // Submit knot annotation data
   submitAnnotations: async (submission: AnnotationSubmission): Promise<any> => {
-    const response = await api.post('/annotations/submit', submission);
+    const response = await api.post("/annotations/submit", submission);
     return response.data;
   },
 
   // Validate submission password
-  validateSubmissionPassword: async (password: string): Promise<SubmissionPasswordResponse> => {
-    const response = await api.post('/validate-submission-password', { password });
+  validateSubmissionPassword: async (
+    password: string,
+  ): Promise<SubmissionPasswordResponse> => {
+    const response = await api.post("/validate-submission-password", {
+      password,
+    });
     return response.data;
   },
-  
 
   // Get annotations by session ID
   getAnnotationsBySessionId: async (sessionId: string): Promise<any[]> => {
@@ -124,21 +132,23 @@ export const trajectoryAPI = {
 
   // Get all annotations
   getAllAnnotations: async (): Promise<any[]> => {
-    const response = await api.get('/annotations');
+    const response = await api.get("/annotations");
     return response.data;
   },
 };
 
 export const adminAPI = {
   // Admin login
-  login: async (credentials: AdminLoginRequest): Promise<AdminLoginResponse> => {
-    const response = await api.post('/admin/login', credentials);
+  login: async (
+    credentials: AdminLoginRequest,
+  ): Promise<AdminLoginResponse> => {
+    const response = await api.post("/admin/login", credentials);
     return response.data;
   },
 
   // Get all knot annotations for admin dashboard
   getAllKnotAnnotations: async (): Promise<KnotAnnotation[]> => {
-    const response = await api.get('/annotations');
+    const response = await api.get("/annotations");
     return response.data;
   },
 };
