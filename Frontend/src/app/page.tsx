@@ -16,7 +16,8 @@ import {
   Users,
   Play,
   AlertTriangle,
-  Sparkles
+  Sparkles,
+  BarChart3
 } from 'lucide-react';
 
 export default function Home() {
