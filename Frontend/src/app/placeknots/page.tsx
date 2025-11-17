@@ -76,10 +76,14 @@ function KnotVisualization({
     const minY = dataMinY - 0.5;
     const maxY = dataMaxY + 0.5;
 
-    const marginTop = 20;
-    const marginRight = 30;
-    const marginBottom = 80;
-    const marginLeft = 80;
+    // Scale margins proportionally for smaller canvases
+    const isSmallCanvas = width < 400 || height < 200;
+    const marginScale = isSmallCanvas ? 0.15 : 1;
+
+    const marginTop = 20 * marginScale;
+    const marginRight = 30 * marginScale;
+    const marginBottom = 80 * marginScale;
+    const marginLeft = 80 * marginScale;
 
     const drawWidth = width - marginLeft - marginRight;
     const drawHeight = height - marginTop - marginBottom;
@@ -189,6 +193,10 @@ function KnotVisualization({
     // Clear canvas efficiently
     ctx.clearRect(0, 0, width, height);
 
+    // Scale visual elements for smaller canvases
+    const isSmallCanvas = width < 400 || height < 200;
+    const visualScale = isSmallCanvas ? 0.4 : 1;
+
     // Draw connecting lines following trajectory path order
     if (trajectoryScaledPoints.length > 1) {
       ctx.beginPath();
@@ -197,7 +205,7 @@ function KnotVisualization({
         ctx.lineTo(trajectoryScaledPoints[i].x, trajectoryScaledPoints[i].y);
       }
       ctx.strokeStyle = "#3B82F6"; // Blue connecting lines
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3 * visualScale;
       ctx.setLineDash([]);
       ctx.stroke();
     }
@@ -210,16 +218,16 @@ function KnotVisualization({
 
       // Draw knot circle
       ctx.beginPath();
-      ctx.arc(point.x, point.y, isStartOrEnd ? 8 : 6, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, isStartOrEnd ? 8 * visualScale : 6 * visualScale, 0, 2 * Math.PI);
       ctx.fillStyle = isStartOrEnd ? "#EF4444" : "#10B981"; // Red for start/end, Green for manual
       ctx.fill();
       ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2 * visualScale;
       ctx.setLineDash([]);
       ctx.stroke();
 
-      // Add small number to show trajectory order (optional)
-      if (!isStartOrEnd && trajectoryScaledPoints.length > 2) {
+      // Add small number to show trajectory order (optional) - skip for small canvas
+      if (!isSmallCanvas && !isStartOrEnd && trajectoryScaledPoints.length > 2) {
         const trajectoryIndex = trajectoryScaledPoints.findIndex(
           (tp) => tp.originalKnot.id === knot.id,
         );
