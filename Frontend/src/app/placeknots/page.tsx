@@ -1616,8 +1616,8 @@ export default function PlaceKnots() {
                           knots={currentTrajectory.knots}
                           knotPlacementOrder={knotPlacementOrder}
                           trajectoryData={currentTrajectory.data}
-                          width={200}
-                          height={96}
+                          width={240}
+                          height={145}
                         />
                         <p className="text-xs text-gray-600 text-center mt-1 font-semibold">👇 Click to view full preview</p>
                       </div>
