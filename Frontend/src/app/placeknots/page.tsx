@@ -288,6 +288,7 @@ export default function PlaceKnots() {
   const [knotPlacementOrder, setKnotPlacementOrder] = useState<
     Map<string, number>
   >(new Map());
+  const previewSectionRef = useRef<HTMLDivElement>(null);
 
   // Password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -1313,6 +1314,12 @@ export default function PlaceKnots() {
     );
   }, [trajectories]);
 
+  const scrollToPreview = () => {
+    if (previewSectionRef.current) {
+      previewSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-6xl mx-auto">
@@ -1582,12 +1589,40 @@ export default function PlaceKnots() {
                 </div>
 
                 {/* Trajectory chart */}
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-white rounded-lg shadow-md p-6 relative">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     {isCurrentTrajectoryComplete
                       ? "Trajectory Complete - All knots placed!"
                       : "Click on the curve to place additional knots"}
                   </h3>
+
+                  {/* Small preview thumbnail - top left */}
+                  {currentTrajectory && currentTrajectory.knots.length > 0 && (
+                    <div
+                      onClick={scrollToPreview}
+                      className="absolute top-20 left-6 z-10 cursor-pointer group"
+                      title="Click to view full preview below"
+                    >
+                      <div className="bg-white border-2 border-blue-400 rounded-lg shadow-lg p-2 hover:border-blue-600 transition-all hover:shadow-xl">
+                        <div className="relative">
+                          <KnotVisualization
+                            knots={currentTrajectory.knots}
+                            knotPlacementOrder={knotPlacementOrder}
+                            trajectoryData={currentTrajectory.data}
+                            width={200}
+                            height={96}
+                          />
+                          <div className="absolute inset-0 bg-blue-600 bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center">
+                            <div className="bg-blue-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                              View Full Preview ↓
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-600 text-center mt-1">Preview</p>
+                      </div>
+                    </div>
+                  )}
+
                   {currentTrajectory && (
                     <div className="h-156 w-full">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1687,7 +1722,7 @@ export default function PlaceKnots() {
 
                 {/* Knot Drawing Visualization */}
                 {currentTrajectory && currentTrajectory.knots.length > 0 && (
-                  <div className="bg-white rounded-lg shadow-md p-6">
+                  <div ref={previewSectionRef} className="bg-white rounded-lg shadow-md p-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
                       Your Knot Drawing
                     </h3>
