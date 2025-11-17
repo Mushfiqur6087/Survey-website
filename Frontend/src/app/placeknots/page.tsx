@@ -261,11 +261,11 @@ function KnotVisualization({
       ref={canvasRef}
       width={width}
       height={height}
-      className="border border-gray-300 rounded-lg bg-white w-full"
+      className="border border-gray-300 rounded-lg bg-white"
       style={{
-        maxWidth: "100%",
-        height: "auto",
-        aspectRatio: `${width}/${height}`,
+        width: `${width}px`,
+        height: `${height}px`,
+        display: 'block',
       }}
     />
   );
@@ -1608,25 +1608,18 @@ export default function PlaceKnots() {
                   {currentTrajectory && currentTrajectory.knots.length > 0 && (
                     <div
                       onClick={scrollToPreview}
-                      className="absolute top-20 left-6 z-10 cursor-pointer group"
-                      title="Click to view full preview below"
+                      className="absolute top-4 left-4 z-10 cursor-pointer hover:opacity-80 transition-opacity"
+                      title="Click to scroll to full preview"
                     >
-                      <div className="bg-white border-2 border-blue-400 rounded-lg shadow-lg p-2 hover:border-blue-600 transition-all hover:shadow-xl">
-                        <div className="relative">
-                          <KnotVisualization
-                            knots={currentTrajectory.knots}
-                            knotPlacementOrder={knotPlacementOrder}
-                            trajectoryData={currentTrajectory.data}
-                            width={200}
-                            height={96}
-                          />
-                          <div className="absolute inset-0 bg-blue-600 bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center">
-                            <div className="bg-blue-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                              View Full Preview ↓
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-600 text-center mt-1">Preview</p>
+                      <div className="bg-white border-2 border-gray-400 rounded-lg shadow-xl p-1 hover:border-blue-500 transition-colors">
+                        <KnotVisualization
+                          knots={currentTrajectory.knots}
+                          knotPlacementOrder={knotPlacementOrder}
+                          trajectoryData={currentTrajectory.data}
+                          width={200}
+                          height={96}
+                        />
+                        <p className="text-xs text-gray-600 text-center mt-1 font-semibold">👇 Click to view full preview</p>
                       </div>
                     </div>
                   )}
