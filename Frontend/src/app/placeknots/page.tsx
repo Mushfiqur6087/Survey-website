@@ -1604,11 +1604,11 @@ export default function PlaceKnots() {
                       : "Click on the curve to place additional knots"}
                   </h3>
 
-                  {/* Small preview thumbnail - top left */}
+                  {/* Small preview thumbnail - top right */}
                   {currentTrajectory && currentTrajectory.knots.length > 0 && (
                     <div
                       onClick={scrollToPreview}
-                      className="absolute top-4 left-4 z-10 cursor-pointer hover:opacity-80 transition-opacity"
+                      className="absolute top-4 right-4 z-10 cursor-pointer hover:opacity-80 transition-opacity"
                       title="Click to scroll to full preview"
                     >
                       <div className="bg-white border-2 border-gray-400 rounded-lg shadow-xl p-1 hover:border-blue-500 transition-colors">
