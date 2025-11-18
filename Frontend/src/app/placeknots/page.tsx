@@ -1664,7 +1664,13 @@ export default function PlaceKnots() {
                   )}
 
                   {currentTrajectory && (
-                    <div className="w-full" style={{ aspectRatio: '800/624', minHeight: '400px' }}>
+                    <div
+                      className="w-full"
+                      style={{
+                        aspectRatio: isMobile ? '1 / 1.2' : '1.65 / 1',
+                        minHeight: isMobile ? '450px' : '500px'
+                      }}
+                    >
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
                           data={currentTrajectory.data}
