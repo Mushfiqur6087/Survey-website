@@ -1344,7 +1344,7 @@ export default function PlaceKnots() {
         {/* Back button */}
         <div className="mb-6">
           <Link href="/">
-            <button className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
+            <button className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors cursor-pointer">
               ← Back to Home
             </button>
           </Link>
@@ -1396,7 +1396,7 @@ export default function PlaceKnots() {
                       </svg>
                     </div>
                     <button
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                       onClick={openTutorial}
                     >
                       Tutorial
@@ -1443,7 +1443,7 @@ export default function PlaceKnots() {
                 <div className="mt-6">
                   <button
                     onClick={startAnnotation}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors cursor-pointer"
                   >
                     Start Annotation
                   </button>
@@ -1485,7 +1485,7 @@ export default function PlaceKnots() {
                         </svg>
                       </div>
                       <button
-                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                         onClick={openTutorial}
                       >
                         Tutorial
@@ -1560,7 +1560,7 @@ export default function PlaceKnots() {
                         <button
                           key={count}
                           onClick={() => handleKnotCountChange(count)}
-                          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                          className={`px-4 py-2 rounded-lg font-semibold transition-colors cursor-pointer ${
                             currentTrajectory?.selectedKnotCount === count
                               ? "bg-blue-500 text-white"
                               : "bg-gray-200 hover:bg-gray-300 text-gray-700"
@@ -1579,7 +1579,7 @@ export default function PlaceKnots() {
                       className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                         currentTrajectory?.knots.length &&
                         currentTrajectory?.knots.length > 2
-                          ? "bg-red-500 hover:bg-red-600 text-white"
+                          ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
                           : "bg-gray-300 cursor-not-allowed text-gray-500"
                       }`}
                     >
@@ -1804,7 +1804,7 @@ export default function PlaceKnots() {
                               {!isStartOrEnd && (
                                 <button
                                   onClick={() => removeKnot(knot.id)}
-                                  className="text-blue-500 hover:text-blue-700 text-sm"
+                                  className="text-blue-500 hover:text-blue-700 text-sm cursor-pointer"
                                 >
                                   Remove
                                 </button>
@@ -1823,7 +1823,7 @@ export default function PlaceKnots() {
                     <button
                       onClick={previousTrajectory}
                       disabled={currentTrajectoryIndex === 0}
-                      className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded transition-colors"
+                      className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded transition-colors cursor-pointer"
                     >
                       ← Previous
                     </button>
@@ -1842,7 +1842,7 @@ export default function PlaceKnots() {
                         disabled={!areAllTrajectoriesComplete || loading}
                         className={`px-6 py-2 rounded transition-colors font-semibold ${
                           areAllTrajectoriesComplete && !loading
-                            ? "bg-green-500 hover:bg-green-600 text-white"
+                            ? "bg-green-500 hover:bg-green-600 text-white cursor-pointer"
                             : "bg-gray-300 cursor-not-allowed text-gray-500"
                         }`}
                       >
@@ -1861,7 +1861,7 @@ export default function PlaceKnots() {
                         }
                         className={`px-4 py-2 rounded transition-colors ${
                           isCurrentTrajectoryComplete
-                            ? "bg-blue-500 hover:bg-blue-600 text-white"
+                            ? "bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
                             : "bg-gray-300 cursor-not-allowed text-gray-500"
                         }`}
                       >
@@ -1883,7 +1883,7 @@ export default function PlaceKnots() {
             </p>
             <button
               onClick={loadRandomTrajectories}
-              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
             >
               Load Random Trajectories
             </button>
