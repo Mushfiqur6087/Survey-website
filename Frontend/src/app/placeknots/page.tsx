@@ -1596,44 +1596,33 @@ export default function PlaceKnots() {
                   </p>
                 </div>
 
-                {/* Trajectory chart */}
-                <div className="bg-white rounded-lg shadow-md p-6 relative">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    {isCurrentTrajectoryComplete
-                      ? "Trajectory Complete - All knots placed!"
-                      : "Click on the curve to place additional knots"}
-                  </h3>
-
-                  {/* Navigation buttons - Previous (Left) */}
+                {/* Trajectory chart with side navigation */}
+                <div className="relative flex items-center gap-4">
+                  {/* Navigation button - Previous (Left) */}
                   <button
                     onClick={previousTrajectory}
                     disabled={currentTrajectoryIndex === 0}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    className="flex-shrink-0 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
                     title="Previous trajectory"
                   >
                     <span className="text-2xl font-bold">&lt;</span>
                   </button>
 
-                  {/* Navigation buttons - Next (Right) */}
-                  <button
-                    onClick={nextTrajectory}
-                    disabled={
-                      !isCurrentTrajectoryComplete ||
-                      currentTrajectoryIndex === trajectories.length - 1
-                    }
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
-                    title="Next trajectory"
-                  >
-                    <span className="text-2xl font-bold">&gt;</span>
-                  </button>
+                  {/* Trajectory chart container */}
+                  <div className="flex-1 bg-white rounded-lg shadow-md p-6 relative">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      {isCurrentTrajectoryComplete
+                        ? "Trajectory Complete - All knots placed!"
+                        : "Click on the curve to place additional knots"}
+                    </h3>
 
-                  {/* Small preview thumbnail - top right */}
-                  {currentTrajectory && currentTrajectory.knots.length > 0 && (
-                    <div
-                      onClick={scrollToPreview}
-                      className="absolute top-4 right-4 z-10 cursor-pointer hover:opacity-80 transition-opacity"
-                      title="Click to scroll to full preview"
-                    >
+                    {/* Small preview thumbnail - top right */}
+                    {currentTrajectory && currentTrajectory.knots.length > 0 && (
+                      <div
+                        onClick={scrollToPreview}
+                        className="absolute top-4 right-4 z-10 cursor-pointer hover:opacity-80 transition-opacity"
+                        title="Click to scroll to full preview"
+                      >
                       <div className="bg-white border-2 border-gray-400 rounded-lg shadow-xl p-1 hover:border-blue-500 transition-colors">
                         <KnotVisualization
                           knots={currentTrajectory.knots}
@@ -1742,6 +1731,20 @@ export default function PlaceKnots() {
                       </ResponsiveContainer>
                     </div>
                   )}
+                  </div>
+
+                  {/* Navigation button - Next (Right) */}
+                  <button
+                    onClick={nextTrajectory}
+                    disabled={
+                      !isCurrentTrajectoryComplete ||
+                      currentTrajectoryIndex === trajectories.length - 1
+                    }
+                    className="flex-shrink-0 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    title="Next trajectory"
+                  >
+                    <span className="text-2xl font-bold">&gt;</span>
+                  </button>
                 </div>
 
                 {/* Knot Drawing Visualization */}
