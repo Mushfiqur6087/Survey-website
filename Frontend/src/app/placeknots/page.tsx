@@ -1329,35 +1329,7 @@ export default function PlaceKnots() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8 relative">
-      {/* Side Navigation Buttons - Fixed position outside main container */}
-      {annotationMode && currentTrajectory && (
-        <>
-          {/* Previous button (Left) */}
-          <button
-            onClick={previousTrajectory}
-            disabled={currentTrajectoryIndex === 0}
-            className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-4 rounded-full shadow-xl transition-all cursor-pointer"
-            title="Previous trajectory"
-          >
-            <span className="text-3xl font-bold">&lt;</span>
-          </button>
-
-          {/* Next button (Right) */}
-          <button
-            onClick={nextTrajectory}
-            disabled={
-              !isCurrentTrajectoryComplete ||
-              currentTrajectoryIndex === trajectories.length - 1
-            }
-            className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-4 rounded-full shadow-xl transition-all cursor-pointer"
-            title="Next trajectory"
-          >
-            <span className="text-3xl font-bold">&gt;</span>
-          </button>
-        </>
-      )}
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="text-center mb-8">
@@ -1624,8 +1596,33 @@ export default function PlaceKnots() {
                   </p>
                 </div>
 
-                {/* Trajectory chart */}
-                <div className="bg-white rounded-lg shadow-md p-6 relative">
+                {/* Trajectory chart with side navigation */}
+                <div className="relative">
+                  {/* Navigation button - Previous (Left) */}
+                  <button
+                    onClick={previousTrajectory}
+                    disabled={currentTrajectoryIndex === 0}
+                    className="absolute -left-16 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    title="Previous trajectory"
+                  >
+                    <span className="text-2xl font-bold">&lt;</span>
+                  </button>
+
+                  {/* Navigation button - Next (Right) */}
+                  <button
+                    onClick={nextTrajectory}
+                    disabled={
+                      !isCurrentTrajectoryComplete ||
+                      currentTrajectoryIndex === trajectories.length - 1
+                    }
+                    className="absolute -right-16 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    title="Next trajectory"
+                  >
+                    <span className="text-2xl font-bold">&gt;</span>
+                  </button>
+
+                  {/* Trajectory chart */}
+                  <div className="bg-white rounded-lg shadow-md p-6 relative">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     {isCurrentTrajectoryComplete
                       ? "Trajectory Complete - All knots placed!"
@@ -1747,6 +1744,7 @@ export default function PlaceKnots() {
                       </ResponsiveContainer>
                     </div>
                   )}
+                  </div>
                 </div>
 
                 {/* Knot Drawing Visualization */}
