@@ -1604,6 +1604,29 @@ export default function PlaceKnots() {
                       : "Click on the curve to place additional knots"}
                   </h3>
 
+                  {/* Navigation buttons - Previous (Left) */}
+                  <button
+                    onClick={previousTrajectory}
+                    disabled={currentTrajectoryIndex === 0}
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    title="Previous trajectory"
+                  >
+                    <span className="text-2xl font-bold">&lt;</span>
+                  </button>
+
+                  {/* Navigation buttons - Next (Right) */}
+                  <button
+                    onClick={nextTrajectory}
+                    disabled={
+                      !isCurrentTrajectoryComplete ||
+                      currentTrajectoryIndex === trajectories.length - 1
+                    }
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    title="Next trajectory"
+                  >
+                    <span className="text-2xl font-bold">&gt;</span>
+                  </button>
+
                   {/* Small preview thumbnail - top right */}
                   {currentTrajectory && currentTrajectory.knots.length > 0 && (
                     <div
