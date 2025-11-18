@@ -261,10 +261,11 @@ function KnotVisualization({
       ref={canvasRef}
       width={width}
       height={height}
-      className="border border-gray-300 rounded-lg bg-white"
+      className="border border-gray-300 rounded-lg bg-white w-full"
       style={{
-        width: `${width}px`,
-        height: `${height}px`,
+        maxWidth: '100%',
+        height: 'auto',
+        aspectRatio: `${width}/${height}`,
         display: 'block',
       }}
     />
@@ -1598,42 +1599,42 @@ export default function PlaceKnots() {
 
                 {/* Trajectory chart with side navigation */}
                 <div className="relative">
-                  {/* Navigation button - Previous (Left) */}
+                  {/* Navigation button - Previous (Left) - Hidden on mobile */}
                   <button
                     onClick={previousTrajectory}
                     disabled={currentTrajectoryIndex === 0}
-                    className="absolute -left-16 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    className="hidden md:block absolute -left-16 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
                     title="Previous trajectory"
                   >
                     <span className="text-2xl font-bold">&lt;</span>
                   </button>
 
-                  {/* Navigation button - Next (Right) */}
+                  {/* Navigation button - Next (Right) - Hidden on mobile */}
                   <button
                     onClick={nextTrajectory}
                     disabled={
                       !isCurrentTrajectoryComplete ||
                       currentTrajectoryIndex === trajectories.length - 1
                     }
-                    className="absolute -right-16 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    className="hidden md:block absolute -right-16 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
                     title="Next trajectory"
                   >
                     <span className="text-2xl font-bold">&gt;</span>
                   </button>
 
                   {/* Trajectory chart */}
-                  <div className="bg-white rounded-lg shadow-md p-6 relative">
+                  <div className="bg-white rounded-lg shadow-md p-3 md:p-6 relative">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     {isCurrentTrajectoryComplete
                       ? "Trajectory Complete - All knots placed!"
                       : "Click on the curve to place additional knots"}
                   </h3>
 
-                  {/* Small preview thumbnail - top right */}
+                  {/* Small preview thumbnail - top right - Hidden on mobile */}
                   {currentTrajectory && currentTrajectory.knots.length > 0 && (
                     <div
                       onClick={scrollToPreview}
-                      className="absolute top-4 right-4 z-10 cursor-pointer hover:opacity-80 transition-opacity"
+                      className="hidden md:block absolute top-4 right-4 z-10 cursor-pointer hover:opacity-80 transition-opacity"
                       title="Click to scroll to full preview"
                     >
                       <div className="bg-white border-2 border-gray-400 rounded-lg shadow-xl p-1 hover:border-blue-500 transition-colors">
@@ -1650,7 +1651,7 @@ export default function PlaceKnots() {
                   )}
 
                   {currentTrajectory && (
-                    <div className="h-156 w-full">
+                    <div className="w-full" style={{ aspectRatio: '800/624', minHeight: '400px' }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
                           data={currentTrajectory.data}
