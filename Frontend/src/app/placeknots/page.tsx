@@ -298,6 +298,19 @@ export default function PlaceKnots() {
     Map<string, number>
   >(new Map());
   const previewSectionRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -1551,12 +1564,12 @@ export default function PlaceKnots() {
                 </div>
 
                 {/* Knot count selection */}
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     Select Number of Additional Knots
                   </h3>
-                  <div className="flex justify-between items-center">
-                    <div className="flex space-x-4">
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:space-x-2">
                       {[3, 4, 5].map((count) => (
                         <button
                           key={count}
@@ -1655,7 +1668,10 @@ export default function PlaceKnots() {
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
                           data={currentTrajectory.data}
-                          margin={{ top: 20, right: 30, bottom: 80, left: 80 }}
+                          margin={isMobile
+                            ? { top: 10, right: 10, bottom: 40, left: 40 }
+                            : { top: 20, right: 30, bottom: 80, left: 80 }
+                          }
                           onClick={
                             isCurrentTrajectoryComplete
                               ? undefined
