@@ -1664,20 +1664,19 @@ export default function PlaceKnots() {
                   )}
 
                   {currentTrajectory && (
-                    <div
-                      className="w-full"
-                      style={{
-                        aspectRatio: isMobile ? '1 / 1.2' : '1.65 / 1',
-                        minHeight: isMobile ? '450px' : '500px'
-                      }}
-                    >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart
-                          data={currentTrajectory.data}
-                          margin={isMobile
-                            ? { top: 10, right: 10, bottom: 40, left: 40 }
-                            : { top: 20, right: 30, bottom: 80, left: 80 }
-                          }
+                    <div className={isMobile ? "overflow-x-auto" : ""}>
+                      <div
+                        className={isMobile ? "" : "w-full"}
+                        style={
+                          isMobile
+                            ? { width: '800px', height: '484px' }
+                            : { aspectRatio: '1.65 / 1', minHeight: '500px' }
+                        }
+                      >
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={currentTrajectory.data}
+                            margin={{ top: 20, right: 30, bottom: 80, left: 80 }}
                           onClick={
                             isCurrentTrajectoryComplete
                               ? undefined
@@ -1765,6 +1764,7 @@ export default function PlaceKnots() {
                           })}
                         </LineChart>
                       </ResponsiveContainer>
+                      </div>
                     </div>
                   )}
                   </div>
