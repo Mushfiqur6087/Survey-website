@@ -108,4 +108,13 @@ public class AdminService {
     public Optional<Admin> findByUsername(String username) {
         return adminRepository.findByUsername(username);
     }
+    
+    /**
+     * Delete admin by username (requires @Transactional in caller)
+     * 
+     * @param username The username of the admin to delete
+     */
+    public void deleteAdmin(String username) {
+        adminRepository.deleteByUsername(username);
+    }
 }

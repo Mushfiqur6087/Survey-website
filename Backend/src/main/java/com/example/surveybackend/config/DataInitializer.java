@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
@@ -122,6 +123,7 @@ public class DataInitializer implements CommandLineRunner {
      * Initialize default admin user if it doesn't exist
      * Also handles migration of existing admin with plain text password to hashed password
      */
+    @Transactional
     private void initializeDefaultAdmin() {
         try {
             Optional<Admin> existingAdmin = adminService.findByUsername(defaultAdminUsername);
@@ -131,8 +133,9 @@ public class DataInitializer implements CommandLineRunner {
                 // Check if the existing admin password needs to be migrated to hashed format
                 if (!passwordHashingUtil.isPasswordHashed(admin.getPassword())) {
                     logger.info("Migrating existing admin password to hashed format");
-                    // Update the password to hashed format
-                    adminService.updatePassword(defaultAdminUsername, defaultAdminPassword);
+                    // Delete and recreate to ensure proper hashing
+                    adminService.deleteAdmin(defaultAdminUsername);
+                    adminService.createAdmin(defaultAdminUsername, defaultAdminPassword);
                     logger.info("Admin password successfully migrated to hashed format");
                 } else {
                     logger.info("Default admin user already exists with hashed password");

@@ -902,17 +902,53 @@ export default function PlaceKnots() {
     }
   };
 
+  // Save state to localStorage
   useEffect(() => {
-    // Generate a unique session ID when component mounts
-    const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setSessionId(newSessionId);
-    loadRandomTrajectories();
+    if (trajectories.length > 0 || annotationMode || sessionId) {
+      const stateToSave = {
+        trajectories,
+        currentTrajectoryIndex,
+        annotationMode,
+        sessionId,
+        knotPlacementOrder: Array.from(knotPlacementOrder.entries()),
+      };
+      localStorage.setItem('annotationState', JSON.stringify(stateToSave));
+    }
+  }, [trajectories, currentTrajectoryIndex, annotationMode, sessionId, knotPlacementOrder]);
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('annotationState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        setTrajectories(parsed.trajectories || []);
+        setCurrentTrajectoryIndex(parsed.currentTrajectoryIndex || 0);
+        setAnnotationMode(parsed.annotationMode || false);
+        setSessionId(parsed.sessionId || `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+        setKnotPlacementOrder(new Map(parsed.knotPlacementOrder || []));
+      } catch (err) {
+        console.error('Failed to load saved state:', err);
+        // If loading fails, initialize normally
+        const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        setSessionId(newSessionId);
+        loadRandomTrajectories();
+      }
+    } else {
+      // No saved state, initialize normally
+      const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      setSessionId(newSessionId);
+      loadRandomTrajectories();
+    }
   }, []);
 
   const loadRandomTrajectories = async () => {
     setLoading(true);
     setError("");
     try {
+      // Clear saved state when loading new trajectories
+      localStorage.removeItem('annotationState');
+      
       // Get 10 random track IDs
       const allTrackIds = await trajectoryAPI.getUniqueTrackIds();
       const shuffled = allTrackIds.sort(() => 0.5 - Math.random());
@@ -951,6 +987,13 @@ export default function PlaceKnots() {
 
       const loadedTrajectories = await Promise.all(trajectoryPromises);
       setTrajectories(loadedTrajectories);
+      
+      // Generate new session ID
+      const newSessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      setSessionId(newSessionId);
+      
+      // Reset knot placement order
+      setKnotPlacementOrder(new Map());
     } catch (err) {
       console.error("Failed to load random trajectories:", err);
       setError("Failed to load trajectories for annotation");
@@ -1236,6 +1279,9 @@ export default function PlaceKnots() {
       );
 
       console.log("Annotation submission successful:", result);
+
+      // Clear saved state from localStorage
+      localStorage.removeItem('annotationState');
 
       // Show success message and redirect to home
       alert(
@@ -1942,10 +1988,10 @@ export default function PlaceKnots() {
 
       {/* Tutorial Modal */}
       {showTutorial && (
-        <div className="fixed inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 bg-opacity-95 flex items-center justify-center z-50 p-8">
-          <div className="bg-white rounded-lg shadow-md max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 lg:left-64 bg-gradient-to-br from-blue-50 to-indigo-100 bg-opacity-95 flex items-center justify-center z-50 p-4 sm:p-8">
+          <div className="bg-white rounded-lg shadow-md max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-white p-6 border-b border-gray-200">
+            <div className="bg-white p-6 border-b border-gray-200 flex-shrink-0">
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800">
@@ -1974,51 +2020,65 @@ export default function PlaceKnots() {
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-196 bg-white">
+            <div className="p-6 overflow-y-auto flex-1 bg-white">
               {tutorialSteps[currentTutorialStep].content}
             </div>
 
             {/* Footer */}
-            <div className="bg-white px-6 py-4 border-t border-gray-200 flex justify-between items-center">
-              <div className="flex space-x-3">
-                <button
-                  onClick={prevTutorialStep}
-                  disabled={currentTutorialStep === 0}
-                  className={`px-4 py-2 rounded transition-colors font-medium ${
-                    currentTutorialStep === 0
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-gray-500 hover:bg-gray-600 text-white"
-                  }`}
-                >
-                  ← Previous
-                </button>
-
-                <Link href="/">
-                  <button className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded font-medium transition-colors">
-                    🏠 Back to Home
+            <div className="bg-white px-6 py-4 border-t border-gray-200 flex-shrink-0">
+              <div className="flex items-center justify-between gap-4">
+                {/* Left buttons */}
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={prevTutorialStep}
+                    disabled={currentTutorialStep === 0}
+                    className={`px-4 py-2 rounded transition-colors font-medium ${
+                      currentTutorialStep === 0
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gray-500 hover:bg-gray-600 text-white"
+                    }`}
+                  >
+                    ← Previous
                   </button>
-                </Link>
+
+                  <Link href="/">
+                    <button className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded font-medium transition-colors">
+                      🏠 Back to Home
+                    </button>
+                  </Link>
+                </div>
+
+                {/* Center - Step counter */}
+                <span className="text-gray-600 font-medium">
+                  {currentTutorialStep + 1} / {tutorialSteps.length}
+                </span>
+
+                {/* Right buttons - Skip and Next/Start */}
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={startAnnotatingFromTutorial}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded font-medium transition-colors"
+                  >
+                    Skip Tutorial
+                  </button>
+
+                  {currentTutorialStep === tutorialSteps.length - 1 ? (
+                    <button
+                      onClick={startAnnotatingFromTutorial}
+                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded font-medium transition-colors"
+                    >
+                      Start Annotating! 🚀
+                    </button>
+                  ) : (
+                    <button
+                      onClick={nextTutorialStep}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-medium transition-colors"
+                    >
+                      Next →
+                    </button>
+                  )}
+                </div>
               </div>
-
-              <span className="text-gray-600 font-medium">
-                {currentTutorialStep + 1} / {tutorialSteps.length}
-              </span>
-
-              {currentTutorialStep === tutorialSteps.length - 1 ? (
-                <button
-                  onClick={startAnnotatingFromTutorial}
-                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded font-medium transition-colors"
-                >
-                  Start Annotating! 🚀
-                </button>
-              ) : (
-                <button
-                  onClick={nextTutorialStep}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-medium transition-colors"
-                >
-                  Next →
-                </button>
-              )}
             </div>
           </div>
         </div>
