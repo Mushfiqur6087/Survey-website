@@ -25,7 +25,7 @@ export default function AdminLogin() {
         localStorage.setItem('adminUsername', response.username || '');
         
         // Redirect to admin dashboard
-        router.push('/admin/dashboard');
+        router.push('/sys2025/dashboard');
       } else {
         setError(response.message);
       }

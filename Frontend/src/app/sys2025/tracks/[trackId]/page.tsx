@@ -34,7 +34,7 @@ export default function TrackDetailPage() {
     const username = localStorage.getItem('adminUsername');
     
     if (!isLoggedIn) {
-      router.push('/admin');
+      router.push('/sys2025');
       return;
     }
     
@@ -99,7 +99,7 @@ export default function TrackDetailPage() {
   const handleLogout = () => {
     localStorage.removeItem('adminLoggedIn');
     localStorage.removeItem('adminUsername');
-    router.push('/admin');
+    router.push('/sys2025');
   };
 
   const formatDate = (dateString: string) => {
@@ -352,7 +352,7 @@ export default function TrackDetailPage() {
               <p className="text-sm text-gray-600">Welcome, {adminUsername}</p>
             </div>
             <div className="flex space-x-4">
-              <Link href="/admin/tracks">
+              <Link href="/sys2025/tracks">
                 <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
                   ← Back to Tracks
                 </button>

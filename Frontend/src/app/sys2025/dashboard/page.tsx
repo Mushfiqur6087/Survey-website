@@ -17,7 +17,7 @@ export default function AdminDashboard() {
     const username = localStorage.getItem('adminUsername');
     
     if (!isLoggedIn) {
-      router.push('/admin');
+      router.push('/sys2025');
       return;
     }
     
@@ -41,7 +41,7 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('adminLoggedIn');
     localStorage.removeItem('adminUsername');
-    router.push('/admin');
+    router.push('/sys2025');
   };
 
   const formatDate = (dateString: string) => {
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex space-x-4">
               <button
-                onClick={() => router.push('/admin/tracks')}
+                onClick={() => router.push('/sys2025/tracks')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
                 View Tracks

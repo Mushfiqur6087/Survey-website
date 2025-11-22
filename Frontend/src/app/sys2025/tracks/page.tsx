@@ -25,7 +25,7 @@ export default function TracksPage() {
     const username = localStorage.getItem('adminUsername');
     
     if (!isLoggedIn) {
-      router.push('/admin');
+      router.push('/sys2025');
       return;
     }
     
@@ -81,7 +81,7 @@ export default function TracksPage() {
   const handleLogout = () => {
     localStorage.removeItem('adminLoggedIn');
     localStorage.removeItem('adminUsername');
-    router.push('/admin');
+    router.push('/sys2025');
   };
 
   const formatDate = (dateString: string) => {
@@ -109,7 +109,7 @@ export default function TracksPage() {
               <p className="text-sm text-gray-600">Welcome, {adminUsername}</p>
             </div>
             <div className="flex space-x-4">
-              <Link href="/admin/dashboard">
+              <Link href="/sys2025/dashboard">
                 <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
                   ← Back to Dashboard
                 </button>
@@ -284,7 +284,7 @@ export default function TracksPage() {
                           {formatDate(track.lastAnnotated)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <Link href={`/admin/tracks/${track.trackId}`}>
+                          <Link href={`/sys2025/tracks/${track.trackId}`}>
                             <button className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-md transition-colors">
                               View Details →
                             </button>
