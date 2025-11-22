@@ -76,10 +76,14 @@ function KnotVisualization({
     const minY = dataMinY - 0.5;
     const maxY = dataMaxY + 0.5;
 
-    const marginTop = 20;
-    const marginRight = 30;
-    const marginBottom = 80;
-    const marginLeft = 80;
+    // Scale margins proportionally for smaller canvases
+    const isSmallCanvas = width < 400 || height < 200;
+    const marginScale = isSmallCanvas ? 0.15 : 1;
+
+    const marginTop = 20 * marginScale;
+    const marginRight = 30 * marginScale;
+    const marginBottom = 80 * marginScale;
+    const marginLeft = 80 * marginScale;
 
     const drawWidth = width - marginLeft - marginRight;
     const drawHeight = height - marginTop - marginBottom;
@@ -189,6 +193,10 @@ function KnotVisualization({
     // Clear canvas efficiently
     ctx.clearRect(0, 0, width, height);
 
+    // Scale visual elements for smaller canvases
+    const isSmallCanvas = width < 400 || height < 200;
+    const visualScale = isSmallCanvas ? 0.4 : 1;
+
     // Draw connecting lines following trajectory path order
     if (trajectoryScaledPoints.length > 1) {
       ctx.beginPath();
@@ -197,7 +205,7 @@ function KnotVisualization({
         ctx.lineTo(trajectoryScaledPoints[i].x, trajectoryScaledPoints[i].y);
       }
       ctx.strokeStyle = "#3B82F6"; // Blue connecting lines
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3 * visualScale;
       ctx.setLineDash([]);
       ctx.stroke();
     }
@@ -210,16 +218,16 @@ function KnotVisualization({
 
       // Draw knot circle
       ctx.beginPath();
-      ctx.arc(point.x, point.y, isStartOrEnd ? 8 : 6, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, isStartOrEnd ? 8 * visualScale : 6 * visualScale, 0, 2 * Math.PI);
       ctx.fillStyle = isStartOrEnd ? "#EF4444" : "#10B981"; // Red for start/end, Green for manual
       ctx.fill();
       ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2 * visualScale;
       ctx.setLineDash([]);
       ctx.stroke();
 
-      // Add small number to show trajectory order (optional)
-      if (!isStartOrEnd && trajectoryScaledPoints.length > 2) {
+      // Add small number to show trajectory order (optional) - skip for small canvas
+      if (!isSmallCanvas && !isStartOrEnd && trajectoryScaledPoints.length > 2) {
         const trajectoryIndex = trajectoryScaledPoints.findIndex(
           (tp) => tp.originalKnot.id === knot.id,
         );
@@ -255,9 +263,10 @@ function KnotVisualization({
       height={height}
       className="border border-gray-300 rounded-lg bg-white w-full"
       style={{
-        maxWidth: "100%",
-        height: "auto",
+        maxWidth: '100%',
+        height: 'auto',
         aspectRatio: `${width}/${height}`,
+        display: 'block',
       }}
     />
   );
@@ -288,6 +297,20 @@ export default function PlaceKnots() {
   const [knotPlacementOrder, setKnotPlacementOrder] = useState<
     Map<string, number>
   >(new Map());
+  const previewSectionRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -1313,6 +1336,12 @@ export default function PlaceKnots() {
     );
   }, [trajectories]);
 
+  const scrollToPreview = () => {
+    if (previewSectionRef.current) {
+      previewSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-6xl mx-auto">
@@ -1329,7 +1358,7 @@ export default function PlaceKnots() {
         {/* Back button */}
         <div className="mb-6">
           <Link href="/">
-            <button className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
+            <button className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors cursor-pointer">
               ← Back to Home
             </button>
           </Link>
@@ -1381,7 +1410,7 @@ export default function PlaceKnots() {
                       </svg>
                     </div>
                     <button
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                       onClick={openTutorial}
                     >
                       Tutorial
@@ -1428,7 +1457,7 @@ export default function PlaceKnots() {
                 <div className="mt-6">
                   <button
                     onClick={startAnnotation}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors cursor-pointer"
                   >
                     Start Annotation
                   </button>
@@ -1470,7 +1499,7 @@ export default function PlaceKnots() {
                         </svg>
                       </div>
                       <button
-                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                         onClick={openTutorial}
                       >
                         Tutorial
@@ -1535,17 +1564,17 @@ export default function PlaceKnots() {
                 </div>
 
                 {/* Knot count selection */}
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     Select Number of Additional Knots
                   </h3>
-                  <div className="flex justify-between items-center">
-                    <div className="flex space-x-4">
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:space-x-2">
                       {[3, 4, 5].map((count) => (
                         <button
                           key={count}
                           onClick={() => handleKnotCountChange(count)}
-                          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                          className={`px-4 py-2 rounded-lg font-semibold transition-colors cursor-pointer ${
                             currentTrajectory?.selectedKnotCount === count
                               ? "bg-blue-500 text-white"
                               : "bg-gray-200 hover:bg-gray-300 text-gray-700"
@@ -1564,7 +1593,7 @@ export default function PlaceKnots() {
                       className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                         currentTrajectory?.knots.length &&
                         currentTrajectory?.knots.length > 2
-                          ? "bg-red-500 hover:bg-red-600 text-white"
+                          ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
                           : "bg-gray-300 cursor-not-allowed text-gray-500"
                       }`}
                     >
@@ -1581,19 +1610,73 @@ export default function PlaceKnots() {
                   </p>
                 </div>
 
-                {/* Trajectory chart */}
-                <div className="bg-white rounded-lg shadow-md p-6">
+                {/* Trajectory chart with side navigation */}
+                <div className="relative">
+                  {/* Navigation button - Previous (Left) - Hidden on mobile */}
+                  <button
+                    onClick={previousTrajectory}
+                    disabled={currentTrajectoryIndex === 0}
+                    className="hidden md:block absolute -left-16 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    title="Previous trajectory"
+                  >
+                    <span className="text-2xl font-bold">&lt;</span>
+                  </button>
+
+                  {/* Navigation button - Next (Right) - Hidden on mobile */}
+                  <button
+                    onClick={nextTrajectory}
+                    disabled={
+                      !isCurrentTrajectoryComplete ||
+                      currentTrajectoryIndex === trajectories.length - 1
+                    }
+                    className="hidden md:block absolute -right-16 top-1/2 transform -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm hover:bg-white/90 disabled:bg-gray-200/50 disabled:cursor-not-allowed text-gray-700 disabled:text-gray-400 p-3 rounded-full shadow-lg transition-all cursor-pointer"
+                    title="Next trajectory"
+                  >
+                    <span className="text-2xl font-bold">&gt;</span>
+                  </button>
+
+                  {/* Trajectory chart */}
+                  <div className="bg-white rounded-lg shadow-md p-3 md:p-6 relative">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     {isCurrentTrajectoryComplete
                       ? "Trajectory Complete - All knots placed!"
                       : "Click on the curve to place additional knots"}
                   </h3>
+
+                  {/* Small preview thumbnail - top right - Hidden on mobile */}
+                  {currentTrajectory && currentTrajectory.knots.length > 0 && (
+                    <div
+                      onClick={scrollToPreview}
+                      className="hidden md:block absolute top-4 right-4 z-10 cursor-pointer hover:opacity-80 transition-opacity"
+                      title="Click to scroll to full preview"
+                    >
+                      <div className="bg-white border-2 border-gray-400 rounded-lg shadow-xl p-1 hover:border-blue-500 transition-colors">
+                        <KnotVisualization
+                          knots={currentTrajectory.knots}
+                          knotPlacementOrder={knotPlacementOrder}
+                          trajectoryData={currentTrajectory.data}
+                          width={240}
+                          height={145}
+                        />
+                        <p className="text-xs text-gray-600 text-center mt-1 font-semibold">👇 Click to view full preview</p>
+                      </div>
+                    </div>
+                  )}
+
                   {currentTrajectory && (
-                    <div className="h-156 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart
-                          data={currentTrajectory.data}
-                          margin={{ top: 20, right: 30, bottom: 80, left: 80 }}
+                    <div className={isMobile ? "overflow-x-auto" : ""}>
+                      <div
+                        className={isMobile ? "" : "w-full"}
+                        style={
+                          isMobile
+                            ? { width: '800px', height: '484px' }
+                            : { aspectRatio: '1.65 / 1', minHeight: '500px' }
+                        }
+                      >
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={currentTrajectory.data}
+                            margin={{ top: 20, right: 30, bottom: 80, left: 80 }}
                           onClick={
                             isCurrentTrajectoryComplete
                               ? undefined
@@ -1681,13 +1764,15 @@ export default function PlaceKnots() {
                           })}
                         </LineChart>
                       </ResponsiveContainer>
+                      </div>
                     </div>
                   )}
+                  </div>
                 </div>
 
                 {/* Knot Drawing Visualization */}
                 {currentTrajectory && currentTrajectory.knots.length > 0 && (
-                  <div className="bg-white rounded-lg shadow-md p-6">
+                  <div ref={previewSectionRef} className="bg-white rounded-lg shadow-md p-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
                       Your Knot Drawing
                     </h3>
@@ -1768,7 +1853,7 @@ export default function PlaceKnots() {
                               {!isStartOrEnd && (
                                 <button
                                   onClick={() => removeKnot(knot.id)}
-                                  className="text-blue-500 hover:text-blue-700 text-sm"
+                                  className="text-blue-500 hover:text-blue-700 text-sm cursor-pointer"
                                 >
                                   Remove
                                 </button>
@@ -1787,7 +1872,7 @@ export default function PlaceKnots() {
                     <button
                       onClick={previousTrajectory}
                       disabled={currentTrajectoryIndex === 0}
-                      className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded transition-colors"
+                      className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded transition-colors cursor-pointer"
                     >
                       ← Previous
                     </button>
@@ -1806,7 +1891,7 @@ export default function PlaceKnots() {
                         disabled={!areAllTrajectoriesComplete || loading}
                         className={`px-6 py-2 rounded transition-colors font-semibold ${
                           areAllTrajectoriesComplete && !loading
-                            ? "bg-green-500 hover:bg-green-600 text-white"
+                            ? "bg-green-500 hover:bg-green-600 text-white cursor-pointer"
                             : "bg-gray-300 cursor-not-allowed text-gray-500"
                         }`}
                       >
@@ -1825,7 +1910,7 @@ export default function PlaceKnots() {
                         }
                         className={`px-4 py-2 rounded transition-colors ${
                           isCurrentTrajectoryComplete
-                            ? "bg-blue-500 hover:bg-blue-600 text-white"
+                            ? "bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
                             : "bg-gray-300 cursor-not-allowed text-gray-500"
                         }`}
                       >
@@ -1847,7 +1932,7 @@ export default function PlaceKnots() {
             </p>
             <button
               onClick={loadRandomTrajectories}
-              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
             >
               Load Random Trajectories
             </button>
