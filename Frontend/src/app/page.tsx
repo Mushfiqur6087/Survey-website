@@ -71,7 +71,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4">
                 <Link href="/placeknots">
                   <Button
-                    size="xl"
+                    size="lg"
                     className="px-8 py-5 rounded-full border-2 border-teal-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                   >
                     <Play className="mr-2 h-8 w-8" />
