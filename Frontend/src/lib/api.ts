@@ -102,8 +102,8 @@ export const trajectoryAPI = {
     return response.data;
   },
 
-  // Get random trajectories for annotation
-  getRandomTrajectories: async (count: number = 10): Promise<number[]> => {
+  // Get random track IDs for annotation
+  getRandomTrackIds: async (count: number = 10): Promise<number[]> => {
     const response = await api.get(`/trajectories/random/${count}`);
     return response.data;
   },
