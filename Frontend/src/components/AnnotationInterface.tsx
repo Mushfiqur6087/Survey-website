@@ -278,7 +278,7 @@ interface KnotAnnotation {
   order?: number; // Track the order in which knots were placed
 }
 
-interface TrajectoryWithKnots {
+export interface TrajectoryWithKnots {
   trackId: number;
   data: TrajectoryData[];
   knots: KnotAnnotation[];
@@ -300,9 +300,24 @@ interface AnnotationInterfaceProps {
   showTutorial?: boolean;
   showBackButton?: boolean;
 
+  // User authentication mode (for save progress feature)
+  username?: string; // If provided, enables save progress feature
+  enableSaveProgress?: boolean;
+  initialProgress?: {
+    trajectories: TrajectoryWithKnots[];
+    currentIndex: number;
+    knotPlacementOrder: [string, number][];
+  } | null;
+
   // Callbacks
   onComplete?: (sessionId: string) => void;
   onCancel?: () => void;
+  onSaveProgress?: (data: {
+    trajectories: TrajectoryWithKnots[];
+    currentIndex: number;
+    completedCount: number;
+    knotPlacementOrder: [string, number][];
+  }) => Promise<void>;
 }
 
 export default function AnnotationInterface({
@@ -314,8 +329,12 @@ export default function AnnotationInterface({
   description = 'Annotate trajectory curves by placing knots at important points',
   showTutorial = true,
   showBackButton = true,
+  username,
+  enableSaveProgress = false,
+  initialProgress,
   onComplete,
-  onCancel
+  onCancel,
+  onSaveProgress
 }: AnnotationInterfaceProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -341,6 +360,11 @@ export default function AnnotationInterface({
 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Save progress state
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [saveError, setSaveError] = useState<string>("");
 
   // Password modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -945,31 +969,53 @@ export default function AnnotationInterface({
     }
   }, [trajectories, currentTrajectoryIndex, annotationMode, sessionId, knotPlacementOrder, sessionPrefix]);
 
-  // Load state from localStorage on mount
+  // Helper function to count completed trajectories
+  const countCompleted = (trajs: TrajectoryWithKnots[]) => {
+    return trajs.filter(t => t.knots.length === t.selectedKnotCount + 2).length;
+  };
+
+  // Load state from localStorage on mount, compare with initialProgress if provided
   useEffect(() => {
     const savedState = localStorage.getItem(`${sessionPrefix}-state`);
+    let localData: any = null;
+    let localCompleted = 0;
+
     if (savedState) {
       try {
-        const parsed = JSON.parse(savedState);
-        setTrajectories(parsed.trajectories || []);
-        setCurrentTrajectoryIndex(parsed.currentTrajectoryIndex || 0);
-        setAnnotationMode(parsed.annotationMode || false);
-        setSessionId(parsed.sessionId || `${sessionPrefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-        setKnotPlacementOrder(new Map(parsed.knotPlacementOrder || []));
+        localData = JSON.parse(savedState);
+        localCompleted = countCompleted(localData.trajectories || []);
       } catch (err) {
-        console.error('Failed to load saved state:', err);
-        // If loading fails, initialize normally
-        const newSessionId = `${sessionPrefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        setSessionId(newSessionId);
-        loadTrajectories();
+        console.error('Failed to parse localStorage:', err);
       }
+    }
+
+    // Check if we have initial progress from database
+    const dbCompleted = initialProgress ? countCompleted(initialProgress.trajectories) : 0;
+
+    // Use whichever has more progress
+    if (initialProgress && dbCompleted >= localCompleted && dbCompleted > 0) {
+      // Use database progress
+      console.log('Using database progress:', dbCompleted, 'completed');
+      setTrajectories(initialProgress.trajectories);
+      setCurrentTrajectoryIndex(initialProgress.currentIndex);
+      setAnnotationMode(true);
+      setSessionId(`${sessionPrefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+      setKnotPlacementOrder(new Map(initialProgress.knotPlacementOrder || []));
+    } else if (localData && localCompleted > 0) {
+      // Use localStorage progress
+      console.log('Using localStorage progress:', localCompleted, 'completed');
+      setTrajectories(localData.trajectories || []);
+      setCurrentTrajectoryIndex(localData.currentTrajectoryIndex || 0);
+      setAnnotationMode(localData.annotationMode || false);
+      setSessionId(localData.sessionId || `${sessionPrefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+      setKnotPlacementOrder(new Map(localData.knotPlacementOrder || []));
     } else {
       // No saved state, initialize normally
       const newSessionId = `${sessionPrefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       setSessionId(newSessionId);
       loadTrajectories();
     }
-  }, []);
+  }, [initialProgress]);
 
   const loadTrajectories = async () => {
     setLoading(true);
@@ -1270,6 +1316,30 @@ export default function AnnotationInterface({
   const previousTrajectory = () => {
     if (currentTrajectoryIndex > 0) {
       setCurrentTrajectoryIndex((prev) => prev - 1);
+    }
+  };
+
+  // Save progress to backend
+  const handleSaveProgress = async () => {
+    if (!onSaveProgress || !enableSaveProgress) return;
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      const completedCount = countCompleted(trajectories);
+      await onSaveProgress({
+        trajectories,
+        currentIndex: currentTrajectoryIndex,
+        completedCount,
+        knotPlacementOrder: Array.from(knotPlacementOrder.entries()),
+      });
+      setLastSaved(new Date());
+    } catch (err: any) {
+      console.error("Failed to save progress:", err);
+      setSaveError(err.message || "Failed to save progress");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1971,6 +2041,42 @@ export default function AnnotationInterface({
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Save Progress Button - Only for authenticated users */}
+                {enableSaveProgress && (
+                  <div className="bg-white rounded-lg shadow-md p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={handleSaveProgress}
+                          disabled={isSaving}
+                          className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                            isSaving
+                              ? "bg-gray-400 cursor-not-allowed text-white"
+                              : "bg-purple-500 hover:bg-purple-600 text-white cursor-pointer"
+                          }`}
+                        >
+                          {isSaving ? "Saving..." : "💾 Save Progress"}
+                        </button>
+                        {lastSaved && (
+                          <span className="text-sm text-green-600">
+                            ✓ Last saved: {lastSaved.toLocaleTimeString()}
+                          </span>
+                        )}
+                        {saveError && (
+                          <span className="text-sm text-red-600">
+                            ✗ {saveError}
+                          </span>
+                        )}
+                      </div>
+                      {username && (
+                        <span className="text-sm text-gray-500">
+                          Logged in as: <strong>{username}</strong>
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
