@@ -1,6 +1,6 @@
 # Data Requirements
 
-This document outlines the data requirements for the Survey Website trajectory analysis application.
+This document outlines the data requirements for the Trajectory Annotation Website trajectory analysis application.
 
 ## Required Data Structure
 

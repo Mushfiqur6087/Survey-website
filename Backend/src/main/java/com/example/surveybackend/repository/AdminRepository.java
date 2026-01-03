@@ -25,4 +25,11 @@ public interface AdminRepository extends JpaRepository<Admin, Long> {
      * @return true if admin exists, false otherwise
      */
     boolean existsByUsername(String username);
+    
+    /**
+     * Delete admin by username
+     * 
+     * @param username The username of the admin to delete
+     */
+    void deleteByUsername(String username);
 }

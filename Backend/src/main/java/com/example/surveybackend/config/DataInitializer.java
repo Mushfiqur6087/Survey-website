@@ -1,8 +1,10 @@
 package com.example.surveybackend.config;
 
+import com.example.surveybackend.entity.Admin;
 import com.example.surveybackend.entity.TrajectoryData;
 import com.example.surveybackend.service.TrajectoryDataService;
 import com.example.surveybackend.service.AdminService;
+import com.example.surveybackend.util.PasswordHashingUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -11,11 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ArrayList;
 
 @Component
@@ -29,21 +33,20 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private AdminService adminService;
     
-    // CHANGE 1: Add configurable paths
-    @Value("${app.dataset.json.path:/opt/survey-data/trajectory_data.json}")
-    private String datasetJsonPath;
+    @Autowired
+    private PasswordHashingUtil passwordHashingUtil;
     
-    @Value("${app.dataset.script.path:/opt/survey-data/export_data.py}")
-    private String pythonScriptPath;
+    @Value("${admin.default.username}")
+    private String defaultAdminUsername;
     
-    @Value("${app.dataset.script.dir:/opt/survey-data}")
-    private String pythonScriptDir;
+    @Value("${admin.default.password}")
+    private String defaultAdminPassword;
     
     @Override
     public void run(String... args) throws Exception {
         logger.info("Starting data initialization...");
         
-        // Initialize default admin
+        // Initialize default admin with password migration
         initializeDefaultAdmin();
         
         // Check if data already exists
@@ -54,21 +57,18 @@ public class DataInitializer implements CommandLineRunner {
         }
         
         try {
-            // CHANGE 2: Check if JSON file exists first, skip Python script if it does
-            File jsonFile = new File(datasetJsonPath);
-            if (!jsonFile.exists()) {
-                logger.info("JSON file not found at {}, attempting to run Python script", datasetJsonPath);
-                
-                // Run Python script to process and export data
-                if (!runPythonDataExport()) {
-                    logger.error("Failed to run Python data export script and no existing JSON file found");
-                    return;
-                }
-            } else {
-                logger.info("Found existing JSON file at {}, skipping Python script execution", datasetJsonPath);
+            // Check if JSON file exists
+            String jsonFile = System.getProperty("user.dir") + "/../Dataset/trajectory_data.json";
+            File jsonFileObj = new File(jsonFile);
+            
+            if (!jsonFileObj.exists()) {
+                logger.error("JSON file not found at: {}. Please ensure the trajectory_data.json file exists in the Dataset directory.", jsonFile);
+                return;
             }
             
-            // Load the exported JSON data
+            logger.info("JSON file found. Loading data from: {}", jsonFile);
+            
+            // Load the JSON data
             List<TrajectoryData> trajectoryDataList = loadTrajectoryDataFromJson();
             
             if (trajectoryDataList.isEmpty()) {
@@ -88,66 +88,14 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
     
-    private boolean runPythonDataExport() {
-        try {
-            // CHANGE 3: Use configurable paths instead of hardcoded relative paths
-            File scriptFile = new File(pythonScriptPath);
-            File workingDir = new File(pythonScriptDir);
-            
-            if (!scriptFile.exists()) {
-                logger.error("Python script not found at: {}", pythonScriptPath);
-                return false;
-            }
-            
-            if (!workingDir.exists()) {
-                logger.error("Python script directory not found at: {}", pythonScriptDir);
-                return false;
-            }
-            
-            ProcessBuilder processBuilder = new ProcessBuilder("python3", pythonScriptPath);
-            processBuilder.directory(workingDir);
-            
-            logger.info("Running Python script: {} from directory: {}", pythonScriptPath, pythonScriptDir);
-            Process process = processBuilder.start();
-            
-            int exitCode = process.waitFor();
-            if (exitCode == 0) {
-                logger.info("Python script executed successfully");
-                return true;
-            } else {
-                logger.error("Python script failed with exit code: {}", exitCode);
-                return false;
-            }
-            
-        } catch (IOException e) {
-            logger.error("IO error running Python script: {}", e.getMessage(), e);
-            return false;
-        } catch (InterruptedException e) {
-            logger.error("Python script execution was interrupted: {}", e.getMessage(), e);
-            Thread.currentThread().interrupt(); // Restore interrupted status
-            return false;
-        } catch (RuntimeException e) {
-            logger.error("Runtime error running Python script: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-    
     private List<TrajectoryData> loadTrajectoryDataFromJson() throws IOException {
-        // CHANGE 4: Use configurable path instead of hardcoded relative path
-        File jsonFile = new File(datasetJsonPath);
-        
-        if (!jsonFile.exists()) {
-            throw new IOException("JSON file not found at: " + datasetJsonPath);
-        }
-        
+        String jsonFile = System.getProperty("user.dir") + "/../Dataset/trajectory_data.json";
         ObjectMapper objectMapper = new ObjectMapper();
         List<TrajectoryData> trajectoryDataList = new ArrayList<>();
         
         try {
-            logger.info("Loading trajectory data from: {}", jsonFile.getAbsolutePath());
-            
             List<Map<String, Object>> jsonData = objectMapper.readValue(
-                jsonFile, 
+                new File(jsonFile), 
                 new TypeReference<List<Map<String, Object>>>() {}
             );
             
@@ -173,21 +121,33 @@ public class DataInitializer implements CommandLineRunner {
     
     /**
      * Initialize default admin user if it doesn't exist
+     * Also handles migration of existing admin with plain text password to hashed password
      */
+    @Transactional
     private void initializeDefaultAdmin() {
         try {
-            String defaultUsername = "admin";
-            String defaultPassword = "admin";
+            Optional<Admin> existingAdmin = adminService.findByUsername(defaultAdminUsername);
             
-            if (!adminService.existsByUsername(defaultUsername)) {
-                adminService.createAdmin(defaultUsername, defaultPassword);
-                logger.info("Default admin user created successfully with username: {} and password: {}", 
-                    defaultUsername, defaultPassword);
+            if (existingAdmin.isPresent()) {
+                Admin admin = existingAdmin.get();
+                // Check if the existing admin password needs to be migrated to hashed format
+                if (!passwordHashingUtil.isPasswordHashed(admin.getPassword())) {
+                    logger.info("Migrating existing admin password to hashed format");
+                    // Delete and recreate to ensure proper hashing
+                    adminService.deleteAdmin(defaultAdminUsername);
+                    adminService.createAdmin(defaultAdminUsername, defaultAdminPassword);
+                    logger.info("Admin password successfully migrated to hashed format");
+                } else {
+                    logger.info("Default admin user already exists with hashed password");
+                }
             } else {
-                logger.info("Default admin user already exists");
+                // Create new admin with hashed password
+                adminService.createAdmin(defaultAdminUsername, defaultAdminPassword);
+                logger.info("Default admin user created successfully with username: {} (password hashed)", 
+                    defaultAdminUsername);
             }
         } catch (Exception e) {
-            logger.error("Error creating default admin user: {}", e.getMessage(), e);
+            logger.error("Error creating or migrating default admin user: {}", e.getMessage(), e);
         }
     }
 }
