@@ -2078,42 +2078,6 @@ export default function AnnotationInterface({
                   </div>
                 )}
 
-                {/* Save Progress Button - Only for authenticated users */}
-                {enableSaveProgress && (
-                  <div className="bg-white rounded-lg shadow-md p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <button
-                          onClick={handleSaveProgress}
-                          disabled={isSaving}
-                          className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-                            isSaving
-                              ? "bg-gray-400 cursor-not-allowed text-white"
-                              : "bg-purple-500 hover:bg-purple-600 text-white cursor-pointer"
-                          }`}
-                        >
-                          {isSaving ? "Saving..." : "💾 Save Progress"}
-                        </button>
-                        {lastSaved && (
-                          <span className="text-sm text-green-600">
-                            ✓ Last saved: {lastSaved.toLocaleTimeString()}
-                          </span>
-                        )}
-                        {saveError && (
-                          <span className="text-sm text-red-600">
-                            ✗ {saveError}
-                          </span>
-                        )}
-                      </div>
-                      {username && (
-                        <span className="text-sm text-gray-500">
-                          Logged in as: <strong>{username}</strong>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Navigation buttons */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex justify-between items-center">
@@ -2151,20 +2115,28 @@ export default function AnnotationInterface({
                       </button>
                     ) : (
                       <button
-                        onClick={nextTrajectory}
+                        onClick={async () => {
+                          if (enableSaveProgress) {
+                            await handleSaveProgress();
+                          }
+                          nextTrajectory();
+                        }}
                         disabled={
                           !isCurrentTrajectoryComplete ||
-                          currentTrajectoryIndex === trajectories.length - 1
+                          currentTrajectoryIndex === trajectories.length - 1 ||
+                          isSaving
                         }
                         className={`px-4 py-2 rounded transition-colors ${
-                          isCurrentTrajectoryComplete
+                          isCurrentTrajectoryComplete && !isSaving
                             ? "bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
                             : "bg-gray-300 cursor-not-allowed text-gray-500"
                         }`}
                       >
-                        {isCurrentTrajectoryComplete
-                          ? "Next →"
-                          : "Complete Current Trajectory"}
+                        {isSaving
+                          ? "Saving..."
+                          : isCurrentTrajectoryComplete
+                            ? "Save and Go Next"
+                            : "Complete Current Trajectory"}
                       </button>
                     )}
                   </div>
