@@ -203,6 +203,36 @@ public class AnnotationUserController {
     }
 
     /**
+     * Logout user - does NOT clear saved progress (progress persists for next login)
+     * POST /api/user/logout
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Object>> logout(@RequestBody Map<String, String> request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            String username = request.get("username");
+            if (username == null || username.trim().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Username is required");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Just acknowledge logout - do NOT clear progress data
+            // Progress is preserved so user can continue where they left off
+            response.put("success", true);
+            response.put("message", "Logout successful");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Logout failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
      * Check if username exists
      * GET /api/user/exists?username=xxx
      */

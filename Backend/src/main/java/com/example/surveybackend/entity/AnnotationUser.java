@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 @Entity
@@ -27,7 +26,6 @@ public class AnnotationUser {
     @Column(name = "display_name")
     private String displayName;
 
-    @Lob
     @Column(name = "session_data", columnDefinition = "TEXT")
     private String sessionData; // JSON string storing annotation progress
 
