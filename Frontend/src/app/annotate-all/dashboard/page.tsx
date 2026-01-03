@@ -24,7 +24,6 @@ export default function AnnotateAllDashboard() {
   const [progress, setProgress] = useState<ProgressInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     const session = userSession.getSession();
@@ -56,35 +55,25 @@ export default function AnnotateAllDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    userSession.clearSession();
-    router.push("/annotate-all");
-  };
-
-  const handleStartOver = async () => {
+  const handleLogout = async () => {
     if (!user) return;
 
-    const confirmed = confirm(
-      "Are you sure you want to start over? This will delete all your saved progress."
-    );
-    if (!confirmed) return;
-
-    setResetting(true);
     try {
-      await userAPI.resetProgress(user.username);
-      // Also clear local storage
+      // Call backend to clear session data
+      await userAPI.logout(user.username);
+      // Clear all localStorage
+      userSession.clearSession();
       userSession.clearLocalProgress(user.username);
-      setProgress({
-        completedCount: 0,
-        totalTrajectories: 237,
-        currentIndex: 0,
-        hasProgress: false,
-        lastSavedAt: null,
-      });
+      // Also clear the annotation state
+      localStorage.removeItem(`annotate-all-${user.username}-state`);
+      router.push("/annotate-all");
     } catch (err) {
-      setError("Failed to reset progress");
-    } finally {
-      setResetting(false);
+      console.error("Logout error:", err);
+      // Still clear frontend session even if backend fails
+      userSession.clearSession();
+      userSession.clearLocalProgress(user.username);
+      localStorage.removeItem(`annotate-all-${user.username}-state`);
+      router.push("/annotate-all");
     }
   };
 
@@ -196,28 +185,14 @@ export default function AnnotateAllDashboard() {
         {/* Action Buttons */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="space-y-4">
-            {progress?.hasProgress ? (
-              <>
-                <Link href="/annotate-all/annotate">
-                  <button className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-lg transition-colors cursor-pointer">
-                    Continue from Trajectory {(progress?.currentIndex || 0) + 1}
-                  </button>
-                </Link>
-                <button
-                  onClick={handleStartOver}
-                  disabled={resetting}
-                  className="w-full py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {resetting ? "Resetting..." : "Start Over"}
-                </button>
-              </>
-            ) : (
-              <Link href="/annotate-all/annotate">
-                <button className="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold text-lg transition-colors cursor-pointer">
-                  Start Annotating
-                </button>
-              </Link>
-            )}
+            <Link href="/annotate-all/annotate">
+              <button className={`w-full py-4 ${progress?.hasProgress ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded-lg font-semibold text-lg transition-colors cursor-pointer`}>
+                {progress?.hasProgress
+                  ? `Continue from Trajectory ${(progress?.currentIndex || 0) + 1}`
+                  : 'Start Annotating'
+                }
+              </button>
+            </Link>
           </div>
 
           {/* Info */}

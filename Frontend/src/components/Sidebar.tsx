@@ -9,7 +9,8 @@ import {
   Target,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  ListChecks
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -100,6 +101,13 @@ export default function Sidebar() {
               onClick={() => setIsOpen(false)}
             >
               Start Survey
+            </NavLink>
+            <NavLink
+              href="/annotate-all"
+              icon={<ListChecks className="h-5 w-5" />}
+              onClick={() => setIsOpen(false)}
+            >
+              Annotate All
             </NavLink>
           </div>
         </nav>

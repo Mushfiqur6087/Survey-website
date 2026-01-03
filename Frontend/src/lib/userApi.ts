@@ -82,6 +82,12 @@ export const userAPI = {
     const response = await api.delete(`/user/progress?username=${encodeURIComponent(username)}`);
     return response.data;
   },
+
+  // Logout user (clears backend session data)
+  logout: async (username: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.post("/user/logout", { username });
+    return response.data;
+  },
 };
 
 // Local storage helpers for session management

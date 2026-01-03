@@ -976,6 +976,7 @@ export default function AnnotationInterface({
 
   // Load state from localStorage on mount, compare with initialProgress if provided
   useEffect(() => {
+    // Only check localStorage as a fallback; prefer database progress
     const savedState = localStorage.getItem(`${sessionPrefix}-state`);
     let localData: any = null;
     let localCompleted = 0;
@@ -986,14 +987,16 @@ export default function AnnotationInterface({
         localCompleted = countCompleted(localData.trajectories || []);
       } catch (err) {
         console.error('Failed to parse localStorage:', err);
+        // Clear corrupted localStorage
+        localStorage.removeItem(`${sessionPrefix}-state`);
       }
     }
 
     // Check if we have initial progress from database
     const dbCompleted = initialProgress ? countCompleted(initialProgress.trajectories) : 0;
 
-    // Use whichever has more progress
-    if (initialProgress && dbCompleted >= localCompleted && dbCompleted > 0) {
+    // Prefer database progress over localStorage
+    if (initialProgress && (dbCompleted > 0 || initialProgress.trajectories.length > 0)) {
       // Use database progress
       console.log('Using database progress:', dbCompleted, 'completed');
       setTrajectories(initialProgress.trajectories);
@@ -1001,8 +1004,10 @@ export default function AnnotationInterface({
       setAnnotationMode(true);
       setSessionId(`${sessionPrefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
       setKnotPlacementOrder(new Map(initialProgress.knotPlacementOrder || []));
+      // Clear stale localStorage since we're using DB data
+      localStorage.removeItem(`${sessionPrefix}-state`);
     } else if (localData && localCompleted > 0) {
-      // Use localStorage progress
+      // Use localStorage progress only if no DB progress
       console.log('Using localStorage progress:', localCompleted, 'completed');
       setTrajectories(localData.trajectories || []);
       setCurrentTrajectoryIndex(localData.currentTrajectoryIndex || 0);
@@ -1335,9 +1340,16 @@ export default function AnnotationInterface({
         knotPlacementOrder: Array.from(knotPlacementOrder.entries()),
       });
       setLastSaved(new Date());
+      setSaveError(""); // Clear any previous errors
     } catch (err: any) {
       console.error("Failed to save progress:", err);
-      setSaveError(err.message || "Failed to save progress");
+      const errorMessage = err.response?.data?.message || err.message || "Failed to save progress. Please try again.";
+      setSaveError(errorMessage);
+
+      // If user not found, might need to re-login
+      if (errorMessage.includes("not found") || err.response?.status === 404) {
+        setSaveError("Session expired. Please log out and log in again.");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -1697,19 +1709,40 @@ export default function AnnotationInterface({
                         (Track ID: {currentTrajectory?.trackId})
                       </span>
                     </h2>
-                    <div className="flex space-x-2">
-                      {trajectories.map((_, index) => (
-                        <div
-                          key={index}
-                          className={`w-3 h-3 rounded-full ${
-                            index === currentTrajectoryIndex
-                              ? "bg-blue-500"
-                              : index < currentTrajectoryIndex
-                                ? "bg-green-500"
-                                : "bg-gray-300"
-                          }`}
-                        />
-                      ))}
+                    <div className="flex space-x-2 items-center">
+                      {/* Show limited dots for large trajectory sets */}
+                      {trajectories.length <= 20 ? (
+                        // Show all dots if 20 or fewer trajectories
+                        trajectories.map((_, index) => (
+                          <div
+                            key={index}
+                            className={`w-3 h-3 rounded-full ${
+                              index === currentTrajectoryIndex
+                                ? "bg-blue-500"
+                                : index < currentTrajectoryIndex
+                                  ? "bg-green-500"
+                                  : "bg-gray-300"
+                            }`}
+                          />
+                        ))
+                      ) : (
+                        // Show simplified indicator for large sets
+                        <>
+                          <div className="flex items-center space-x-1 bg-gray-100 px-3 py-1 rounded-full">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-xs font-semibold text-gray-700">
+                              {currentTrajectoryIndex}
+                            </span>
+                          </div>
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <div className="flex items-center space-x-1 bg-gray-100 px-3 py-1 rounded-full">
+                            <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                            <span className="text-xs font-semibold text-gray-700">
+                              {trajectories.length - currentTrajectoryIndex - 1}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
